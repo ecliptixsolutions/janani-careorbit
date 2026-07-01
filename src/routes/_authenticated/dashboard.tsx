@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useRoleAccess } from "@/hooks/use-role-access";
 import { Badge } from "@/components/ui/badge";
+import { isMissingRelationError } from "@/lib/supabase-errors";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -38,6 +39,11 @@ function Dashboard() {
           .gte("scheduled_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
           .lt("scheduled_at", new Date(new Date().setHours(24, 0, 0, 0)).toISOString()),
       ]);
+
+      if (patients.error && !isMissingRelationError(patients.error)) throw patients.error;
+      if (appts.error && !isMissingRelationError(appts.error)) throw appts.error;
+      if (today.error && !isMissingRelationError(today.error)) throw today.error;
+
       return {
         patients: patients.count ?? 0,
         appts: appts.count ?? 0,

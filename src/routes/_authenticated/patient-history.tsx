@@ -7,6 +7,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useRoleAccess } from "@/hooks/use-role-access";
+import { isMissingRelationError } from "@/lib/supabase-errors";
 
 export const Route = createFileRoute("/_authenticated/patient-history")({
   component: PatientHistoryPage,
@@ -37,7 +38,8 @@ function PatientHistoryPage() {
         .from("patients")
         .select("*")
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return data ?? [];
     },
   });
@@ -52,7 +54,8 @@ function PatientHistoryPage() {
         .select("*")
         .in("patient_id", patientIds)
         .order("scheduled_at", { ascending: false });
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return data ?? [];
     },
   });

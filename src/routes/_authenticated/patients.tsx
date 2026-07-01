@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { isMissingRelationError, missingSchemaMessage } from "@/lib/supabase-errors";
 
 export const Route = createFileRoute("/_authenticated/patients")({
   component: PatientsPage,
@@ -94,7 +95,8 @@ function PatientsPage() {
         .from("patients")
         .select("*")
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return data ?? [];
     },
   });
@@ -119,7 +121,8 @@ function PatientsPage() {
         .select("*")
         .eq("patient_id", historyPatient!.id)
         .order("scheduled_at", { ascending: false });
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return data ?? [];
     },
   });
@@ -127,7 +130,10 @@ function PatientsPage() {
   const createMut = useMutation<void, Error, PatientCreatePayload>({
     mutationFn: async (form) => {
       const { error } = await supabase.from("patients").insert({ ...form, created_by: user!.id });
-      if (error) throw error;
+      if (error) {
+        if (isMissingRelationError(error)) throw new Error(missingSchemaMessage("Patient registration"));
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Patient added");

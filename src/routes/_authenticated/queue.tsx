@@ -32,6 +32,7 @@ import {
   getAppointmentToken,
   parseAppointmentWorkflow,
 } from "@/lib/appointment-workflow";
+import { isMissingRelationError, missingSchemaMessage } from "@/lib/supabase-errors";
 
 export const Route = createFileRoute("/_authenticated/queue")({
   component: QueuePage,
@@ -98,7 +99,8 @@ function QueuePage() {
         .gte("scheduled_at", start.toISOString())
         .lt("scheduled_at", end.toISOString())
         .order("scheduled_at", { ascending: true });
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return (data ?? []) as QueueAppointment[];
     },
   });
@@ -160,7 +162,10 @@ function QueuePage() {
         .from("appointments")
         .update({ status, notes })
         .eq("id", appointment.id);
-      if (error) throw error;
+      if (error) {
+        if (isMissingRelationError(error)) throw new Error(missingSchemaMessage("Queue updates"));
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Queue updated");

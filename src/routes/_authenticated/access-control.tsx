@@ -19,6 +19,7 @@ import {
   roleFromRow,
   type RoleKey,
 } from "@/lib/access-control";
+import { isMissingRelationError, missingSchemaMessage } from "@/lib/supabase-errors";
 
 export const Route = createFileRoute("/_authenticated/access-control")({
   component: AccessControlPage,
@@ -69,7 +70,8 @@ function AccessControlPage() {
     enabled: access?.permissions.canManageUsers ?? false,
     queryFn: async () => {
       const { data, error } = await supabase.from("profiles").select("*").order("created_at");
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return data ?? [];
     },
   });
@@ -79,7 +81,8 @@ function AccessControlPage() {
     enabled: access?.permissions.canManageUsers ?? false,
     queryFn: async () => {
       const { data, error } = await supabase.from("user_roles").select("*").order("created_at");
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return data ?? [];
     },
   });
@@ -120,7 +123,10 @@ function AccessControlPage() {
         role: roleConfig.role,
         custom_label: roleConfig.custom_label,
       });
-      if (error) throw error;
+      if (error) {
+        if (isMissingRelationError(error)) throw new Error(missingSchemaMessage("Role assignment"));
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Role updated");

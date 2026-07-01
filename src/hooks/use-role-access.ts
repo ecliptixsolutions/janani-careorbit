@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
+import { isMissingRelationError } from "@/lib/supabase-errors";
 import {
   isPendingLabel,
   normalizeCustomLabel,
@@ -60,6 +61,10 @@ export function useRoleAccess() {
   return useQuery({
     queryKey: ["role-access", user?.id],
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: false,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       if (!user) throw new Error("User is required");
 
@@ -68,9 +73,11 @@ export function useRoleAccess() {
         supabase.from("user_roles").select("*").eq("user_id", user.id),
       ]);
 
-      if (profileResult.error) throw profileResult.error;
-      const profile: Profile | null = profileResult.data ?? null;
-      const roleReadError = roleResult.error?.message ?? null;
+      if (profileResult.error && !isMissingRelationError(profileResult.error)) throw profileResult.error;
+      if (roleResult.error && !isMissingRelationError(roleResult.error)) throw roleResult.error;
+
+      const profile: Profile | null = profileResult.error ? null : (profileResult.data ?? null);
+      const roleReadError = roleResult.error?.message ?? profileResult.error?.message ?? null;
       const roles: UserRole[] = roleResult.error ? [] : (roleResult.data ?? []);
       const primaryRole =
         roles.length > 0

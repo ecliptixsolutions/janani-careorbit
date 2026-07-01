@@ -25,6 +25,7 @@ import {
   getWhatsAppHref,
   parseAppointmentWorkflow,
 } from "@/lib/appointment-workflow";
+import { isMissingRelationError, missingSchemaMessage } from "@/lib/supabase-errors";
 
 export const Route = createFileRoute("/_authenticated/automations")({
   component: AutomationsPage,
@@ -175,7 +176,8 @@ function AutomationsPage() {
         .select("*, patients(id, full_name, mrn, phone)")
         .order("scheduled_at", { ascending: false })
         .limit(80);
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return (data ?? []) as AppointmentWithPatient[];
     },
   });
@@ -193,7 +195,10 @@ function AutomationsPage() {
           }),
         })
         .eq("id", task.appointment.id);
-      if (error) throw error;
+      if (error) {
+        if (isMissingRelationError(error)) throw new Error(missingSchemaMessage("Automation logging"));
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Automation activity logged");

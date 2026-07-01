@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { isMissingRelationError, missingSchemaMessage } from "@/lib/supabase-errors";
 
 export const Route = createFileRoute("/_authenticated/appointments")({
   component: AppointmentsPage,
@@ -82,7 +83,8 @@ function AppointmentsPage() {
         .from("appointments")
         .select("*, patients(id, full_name, mrn, phone)")
         .order("scheduled_at", { ascending: true });
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return (data ?? []) as AppointmentWithPatient[];
     },
   });
@@ -110,7 +112,10 @@ function AppointmentsPage() {
         doctor_id: user!.id,
         created_by: user!.id,
       });
-      if (error) throw error;
+      if (error) {
+        if (isMissingRelationError(error)) throw new Error(missingSchemaMessage("Appointment scheduling"));
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Appointment scheduled");

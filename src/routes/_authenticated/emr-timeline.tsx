@@ -24,6 +24,7 @@ import {
   parseAppointmentWorkflow,
   stripWorkflowNotes,
 } from "@/lib/appointment-workflow";
+import { isMissingRelationError } from "@/lib/supabase-errors";
 
 export const Route = createFileRoute("/_authenticated/emr-timeline")({
   component: EmrTimelinePage,
@@ -143,7 +144,8 @@ function EmrTimelinePage() {
         .from("patients")
         .select("*")
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return data ?? [];
     },
   });
@@ -158,7 +160,8 @@ function EmrTimelinePage() {
         .select("*")
         .in("patient_id", patientIds)
         .order("scheduled_at", { ascending: false });
-      if (error) throw error;
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
       return data ?? [];
     },
   });
