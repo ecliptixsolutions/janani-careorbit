@@ -112,7 +112,8 @@ function SignupPage() {
 
   const handleSuggestPassword = () => {
     setPassword(generateStrongPassword());
-    setShowPassword(true);
+    setShowPassword(false);
+    toast.success("Strong password generated");
   };
 
   return (
@@ -131,12 +132,14 @@ function SignupPage() {
           Start managing your facility today
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} autoComplete="on" className="mt-6 space-y-4">
           <div>
             <Label htmlFor="name">Full name</Label>
             <Input
               id="name"
+              name="name"
               required
+              autoComplete="name"
               value={fullName}
               onChange={(e) => {
                 setFullName(e.target.value);
@@ -148,6 +151,8 @@ function SignupPage() {
             <Label htmlFor="org">Organization</Label>
             <Input
               id="org"
+              name="organization"
+              autoComplete="organization"
               value={organization}
               onChange={(e) => {
                 setOrganization(e.target.value);
@@ -184,8 +189,12 @@ function SignupPage() {
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
+              name="email"
               type="email"
               required
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -210,9 +219,14 @@ function SignupPage() {
             <div className="relative">
               <Input
                 id="password"
+                name="new-password"
                 type={showPassword ? "text" : "password"}
                 required
                 minLength={8}
+                autoComplete="new-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);

@@ -63,13 +63,17 @@ function LoginPage() {
           Sign in to your CareOrbit account
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} autoComplete="on" className="mt-6 space-y-4">
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
+              name="email"
               type="email"
               required
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -82,8 +86,13 @@ function LoginPage() {
             <div className="relative">
               <Input
                 id="password"
+                name="current-password"
                 type={showPassword ? "text" : "password"}
                 required
+                autoComplete="current-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
