@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { defineConfig } from "vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -9,7 +10,7 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   base: "/",
-  plugins: [react(), tailwindcss(), tsconfigPaths()],
+  plugins: [tanstackRouter({ target: "react", autoCodeSplitting: true }), react(), tailwindcss(), tsconfigPaths()],
   build: {
     outDir: "dist/hostinger",
     emptyOutDir: true,
