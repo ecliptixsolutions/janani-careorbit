@@ -1,0 +1,11 @@
+{
+  "framework": "vite",
+  "buildCommand": "npx vite build --config vite.hostinger.config.ts",
+  "outputDirectory": "dist/hostinger",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/hostinger.html"
+    }
+  ]
+}
