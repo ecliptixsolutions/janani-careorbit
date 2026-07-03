@@ -254,7 +254,7 @@ function AppointmentsPage() {
               <Plus className="mr-2 h-4 w-4" /> New appointment
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>New appointment</DialogTitle>
               <DialogDescription>
