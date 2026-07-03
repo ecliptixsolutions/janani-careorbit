@@ -58,6 +58,66 @@ export type Database = {
           },
         ];
       };
+      notifications: {
+        Row: {
+          actor_id: string | null;
+          appointment_id: string | null;
+          body: string;
+          channel: string;
+          created_at: string;
+          id: string;
+          metadata: Json;
+          patient_id: string | null;
+          read_at: string | null;
+          recipient_id: string | null;
+          recipient_phone: string | null;
+          title: string;
+        };
+        Insert: {
+          actor_id?: string | null;
+          appointment_id?: string | null;
+          body: string;
+          channel?: string;
+          created_at?: string;
+          id?: string;
+          metadata?: Json;
+          patient_id?: string | null;
+          read_at?: string | null;
+          recipient_id?: string | null;
+          recipient_phone?: string | null;
+          title: string;
+        };
+        Update: {
+          actor_id?: string | null;
+          appointment_id?: string | null;
+          body?: string;
+          channel?: string;
+          created_at?: string;
+          id?: string;
+          metadata?: Json;
+          patient_id?: string | null;
+          read_at?: string | null;
+          recipient_id?: string | null;
+          recipient_phone?: string | null;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_appointment_id_fkey";
+            columns: ["appointment_id"];
+            isOneToOne: false;
+            referencedRelation: "appointments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_patient_id_fkey";
+            columns: ["patient_id"];
+            isOneToOne: false;
+            referencedRelation: "patients";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       patients: {
         Row: {
           address: string | null;

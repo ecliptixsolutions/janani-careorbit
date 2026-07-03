@@ -2,6 +2,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export type AppointmentWorkflowMeta = {
   doctorName: string;
+  doctorNotificationPhone: string;
   token: string;
   checkInMethod: string;
   checkedInAt: string;
@@ -13,6 +14,7 @@ export type AppointmentWorkflowMeta = {
 
 const workflowLabels = {
   doctorName: "Doctor name",
+  doctorNotificationPhone: "Doctor notification phone",
   token: "Queue token",
   checkInMethod: "Check-in method",
   checkedInAt: "Checked in at",
@@ -39,6 +41,7 @@ export function parseAppointmentWorkflow(
 ): AppointmentWorkflowMeta {
   return {
     doctorName: getWorkflowValue(notes, workflowLabels.doctorName),
+    doctorNotificationPhone: getWorkflowValue(notes, workflowLabels.doctorNotificationPhone),
     token: getWorkflowValue(notes, workflowLabels.token),
     checkInMethod: getWorkflowValue(notes, workflowLabels.checkInMethod),
     checkedInAt: getWorkflowValue(notes, workflowLabels.checkedInAt),

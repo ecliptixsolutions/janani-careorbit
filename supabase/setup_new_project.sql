@@ -66,10 +66,26 @@ create table if not exists public.appointments (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  recipient_id uuid references auth.users(id) on delete cascade,
+  actor_id uuid references auth.users(id) on delete set null,
+  appointment_id uuid references public.appointments(id) on delete cascade,
+  patient_id uuid references public.patients(id) on delete set null,
+  channel text not null default 'in_app',
+  recipient_phone text,
+  title text not null,
+  body text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
 alter table public.profiles enable row level security;
 alter table public.user_roles enable row level security;
 alter table public.patients enable row level security;
 alter table public.appointments enable row level security;
+alter table public.notifications enable row level security;
 
 create or replace function public.has_role(_user_id uuid, _role public.app_role)
 returns boolean
@@ -106,15 +122,17 @@ declare
   v_role public.app_role;
   v_custom text;
 begin
-  insert into public.profiles (id, full_name, organization, custom_role_label)
+  insert into public.profiles (id, full_name, phone, organization, custom_role_label)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', new.email),
+    new.raw_user_meta_data->>'phone',
     new.raw_user_meta_data->>'organization',
     new.raw_user_meta_data->>'custom_role_label'
   )
   on conflict (id) do update set
     full_name = coalesce(excluded.full_name, public.profiles.full_name),
+    phone = coalesce(excluded.phone, public.profiles.phone),
     organization = coalesce(excluded.organization, public.profiles.organization),
     custom_role_label = coalesce(excluded.custom_role_label, public.profiles.custom_role_label),
     updated_at = now();
@@ -178,6 +196,10 @@ begin
     create policy "Admins can view all roles" on public.user_roles for select to authenticated using (public.has_role(auth.uid(), 'admin'));
   end if;
 
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'user_roles' and policyname = 'Authenticated can view doctor roles') then
+    create policy "Authenticated can view doctor roles" on public.user_roles for select to authenticated using (role = 'doctor');
+  end if;
+
   if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'user_roles' and policyname = 'Admins manage roles') then
     create policy "Admins manage roles" on public.user_roles for all to authenticated
       using (public.has_role(auth.uid(), 'admin'))
@@ -227,6 +249,18 @@ begin
   if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'appointments' and policyname = 'Admins can delete appointments') then
     create policy "Admins can delete appointments" on public.appointments for delete to authenticated using (public.has_role(auth.uid(), 'admin'));
   end if;
+
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'notifications' and policyname = 'Users can view own notifications') then
+    create policy "Users can view own notifications" on public.notifications for select to authenticated using (recipient_id = auth.uid() or public.has_role(auth.uid(), 'admin'));
+  end if;
+
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'notifications' and policyname = 'Users can mark own notifications read') then
+    create policy "Users can mark own notifications read" on public.notifications for update to authenticated using (recipient_id = auth.uid()) with check (recipient_id = auth.uid());
+  end if;
+
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'notifications' and policyname = 'Authenticated can create notifications') then
+    create policy "Authenticated can create notifications" on public.notifications for insert to authenticated with check (actor_id = auth.uid() or public.has_role(auth.uid(), 'admin'));
+  end if;
 end $$;
 
 revoke all on function public.has_role(uuid, public.app_role) from public, anon;
@@ -234,15 +268,17 @@ grant execute on function public.has_role(uuid, public.app_role) to authenticate
 revoke all on function public.handle_new_user() from public, anon, authenticated;
 revoke all on function public.handle_updated_at() from public, anon, authenticated;
 
-insert into public.profiles (id, full_name, organization, custom_role_label)
+insert into public.profiles (id, full_name, phone, organization, custom_role_label)
 select
   u.id,
   coalesce(u.raw_user_meta_data->>'full_name', u.email),
+  u.raw_user_meta_data->>'phone',
   u.raw_user_meta_data->>'organization',
   u.raw_user_meta_data->>'custom_role_label'
 from auth.users u
 on conflict (id) do update set
   full_name = coalesce(excluded.full_name, public.profiles.full_name),
+  phone = coalesce(excluded.phone, public.profiles.phone),
   organization = coalesce(excluded.organization, public.profiles.organization),
   custom_role_label = coalesce(excluded.custom_role_label, public.profiles.custom_role_label),
   updated_at = now();

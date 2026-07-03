@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useRoleAccess } from "@/hooks/use-role-access";
+import { NotificationBell } from "@/components/notification-bell";
 
 const items = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard, permission: "canViewDashboard" },
@@ -100,6 +101,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="border-t p-3">
+          <div className="mb-3 flex items-center justify-between rounded-lg border bg-sidebar-accent/60 p-2">
+            <span className="px-1 text-xs font-medium text-sidebar-foreground">Alerts</span>
+            <NotificationBell />
+          </div>
           <div className="mb-3 rounded-lg border bg-sidebar-accent/60 p-3 text-xs text-sidebar-foreground">
             <div className="mb-2 flex items-center gap-2">
               <ShieldCheck className="h-3.5 w-3.5 text-brand-blue" />
@@ -122,6 +127,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Activity className="h-5 w-5 text-primary" /> CareOrbit
           </Link>
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <Badge variant="secondary" className="max-w-28 truncate">
               {access?.copy.label ?? "Role"}
             </Badge>

@@ -47,6 +47,7 @@ function SignupPage() {
   const [role, setRole] = useState<RoleKey>("staff");
   const [fullName, setFullName] = useState("");
   const [organization, setOrganization] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -55,6 +56,7 @@ function SignupPage() {
   const handleSubmit = async () => {
     const trimmedFullName = fullName.trim();
     const trimmedOrganization = organization.trim();
+    const trimmedPhone = phone.trim();
     const trimmedEmail = email.trim();
 
     if (!trimmedFullName || !trimmedEmail || !password) {
@@ -80,6 +82,7 @@ function SignupPage() {
         data: {
           full_name: trimmedFullName,
           organization: trimmedOrganization,
+          phone: trimmedPhone,
           role: requestedRole.role,
           requested_role: role,
           custom_role_label: requestedRole.custom_label,
@@ -200,6 +203,22 @@ function SignupPage() {
                 <p className="mt-2 text-xs text-muted-foreground">
                   For testing, accounts are approved immediately with the selected role rights.
                 </p>
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="mb-1 block text-sm font-medium">
+                  Phone / WhatsApp number
+                </label>
+                <input
+                  id="phone"
+                  name="phone"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="Required for phone notifications"
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none"
+                />
               </div>
             </>
           ) : (

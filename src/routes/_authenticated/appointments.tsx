@@ -43,20 +43,30 @@ export const Route = createFileRoute("/_authenticated/appointments")({
 
 type AppointmentStatus = Tables<"appointments">["status"];
 type PatientOption = Pick<Tables<"patients">, "id" | "full_name" | "mrn" | "phone">;
+type DoctorOption = Pick<Tables<"profiles">, "id" | "full_name" | "phone">;
 type AppointmentWithPatient = Tables<"appointments"> & {
   patients: PatientOption | null;
 };
 type AppointmentFormValues = {
   patient_id: string;
+  doctor_id: string;
   appointment_date: string;
   appointment_time: string;
   duration_minutes: string;
   doctor_name: string;
+  notification_phone: string;
   reason: string;
   visit_notes: string;
   status: AppointmentStatus;
 };
-type AppointmentCreatePayload = TablesInsert<"appointments">;
+type AppointmentCreatePayload = TablesInsert<"appointments"> & {
+  doctor_name: string;
+  notification_phone: string;
+  patient_name: string;
+};
+type AppointmentCreateResult = {
+  phoneStatus: "not_requested" | "sent" | "provider_not_configured" | "failed";
+};
 
 const statusColors: Record<AppointmentStatus, string> = {
   scheduled: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
@@ -100,26 +110,117 @@ function AppointmentsPage() {
     },
   });
 
+  const { data: doctors = [] } = useQuery<DoctorOption[]>({
+    queryKey: ["doctor-options"],
+    queryFn: async () => {
+      const { data: roleRows, error: roleError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "doctor");
+      if (roleError && !isMissingRelationError(roleError)) throw roleError;
+      if (roleError) return [];
+
+      const ids = [...new Set((roleRows ?? []).map((row) => row.user_id))];
+      if (ids.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, phone")
+        .in("id", ids)
+        .order("full_name");
+      if (error && !isMissingRelationError(error)) throw error;
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+
   const todayAppointments = useMemo(() => {
     const today = todayInputDate();
     return appts.filter((appointment) => appointment.scheduled_at.slice(0, 10) === today);
   }, [appts]);
 
-  const createMut = useMutation<void, Error, AppointmentCreatePayload>({
+  const createMut = useMutation<AppointmentCreateResult, Error, AppointmentCreatePayload>({
     mutationFn: async (form) => {
-      const { error } = await supabase.from("appointments").insert({
-        ...form,
-        doctor_id: user!.id,
-        created_by: user!.id,
-      });
+      const { doctor_name, notification_phone, patient_name, ...appointment } = form;
+      const { data, error } = await supabase
+        .from("appointments")
+        .insert({
+          ...appointment,
+          created_by: user!.id,
+        })
+        .select("id, patient_id, scheduled_at")
+        .single();
       if (error) {
-        if (isMissingRelationError(error)) throw new Error(missingSchemaMessage("Appointment scheduling"));
+        if (isMissingRelationError(error))
+          throw new Error(missingSchemaMessage("Appointment scheduling"));
         throw error;
       }
+
+      if (data) {
+        const when = format(new Date(appointment.scheduled_at), "MMM d, yyyy h:mm a");
+        const notificationBody = `${patient_name} is scheduled with ${doctor_name} on ${when}.`;
+        if (appointment.doctor_id) {
+          const { error: notificationError } = await supabase.from("notifications").insert({
+            recipient_id: appointment.doctor_id,
+            actor_id: user!.id,
+            appointment_id: data.id,
+            patient_id: appointment.patient_id,
+            channel: notification_phone ? "in_app_phone_ready" : "in_app",
+            recipient_phone: notification_phone || null,
+            title: "New appointment booked",
+            body: notificationBody,
+            metadata: {
+              patient_name,
+              doctor_name,
+              notification_phone,
+              phone_provider_status: notification_phone ? "ready_for_provider" : "not_requested",
+            },
+          });
+          if (notificationError && !isMissingRelationError(notificationError)) {
+            throw notificationError;
+          }
+        }
+
+        if (notification_phone) {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          try {
+            const phoneResponse = await fetch("/api/appointment-notification", {
+              method: "POST",
+              headers: {
+                authorization: `Bearer ${session?.access_token ?? ""}`,
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({
+                phone: notification_phone,
+                message: `CareOrbit: ${notificationBody}`,
+              }),
+            });
+            if (phoneResponse.ok) return { phoneStatus: "sent" };
+            const phoneResult = (await phoneResponse.json()) as { code?: string };
+            if (phoneResult.code === "PROVIDER_NOT_CONFIGURED") {
+              return { phoneStatus: "provider_not_configured" };
+            }
+            return { phoneStatus: "failed" };
+          } catch {
+            return { phoneStatus: "failed" };
+          }
+        }
+      }
+      return { phoneStatus: "not_requested" };
     },
-    onSuccess: () => {
+    onSuccess: ({ phoneStatus }) => {
       toast.success("Appointment scheduled");
+      if (phoneStatus === "sent") toast.success("Phone notification sent");
+      if (phoneStatus === "provider_not_configured") {
+        toast.info("In-app alert created. Phone provider setup is still required.");
+      }
+      if (phoneStatus === "failed") {
+        toast.warning("Appointment saved, but the phone notification could not be sent.");
+      }
       qc.invalidateQueries({ queryKey: ["appointments"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
       setOpen(false);
     },
     onError: (e) => toast.error(e.message),
@@ -163,6 +264,7 @@ function AppointmentsPage() {
             </DialogHeader>
             <ApptForm
               patients={patients}
+              doctors={doctors}
               loading={createMut.isPending}
               queuePosition={todayAppointments.length + 1}
               onSubmit={(d) => createMut.mutate(d)}
@@ -267,27 +369,34 @@ function AppointmentsPage() {
 
 function ApptForm({
   patients,
+  doctors,
   onSubmit,
   loading,
   queuePosition,
 }: {
   patients: PatientOption[];
+  doctors: DoctorOption[];
   onSubmit: (d: AppointmentCreatePayload) => void;
   loading: boolean;
   queuePosition: number;
 }) {
   const [form, setForm] = useState<AppointmentFormValues>({
     patient_id: "",
+    doctor_id: "",
     appointment_date: todayInputDate(),
     appointment_time: "",
     duration_minutes: "30",
     doctor_name: "",
+    notification_phone: "",
     reason: "",
     visit_notes: "",
     status: "scheduled",
   });
   const update = <K extends keyof AppointmentFormValues>(k: K, v: AppointmentFormValues[K]) =>
     setForm({ ...form, [k]: v });
+  const selectedDoctor = doctors.find((doctor) => doctor.id === form.doctor_id);
+  const selectedPatient = patients.find((patient) => patient.id === form.patient_id);
+  const phoneRequired = !selectedDoctor?.phone;
 
   return (
     <form
@@ -296,12 +405,17 @@ function ApptForm({
         const scheduledAt = new Date(`${form.appointment_date}T${form.appointment_time}`);
         onSubmit({
           patient_id: form.patient_id,
+          doctor_id: form.doctor_id || null,
           scheduled_at: scheduledAt.toISOString(),
           duration_minutes: Number(form.duration_minutes),
           reason: form.reason,
           status: form.status,
+          doctor_name: form.doctor_name,
+          notification_phone: form.notification_phone,
+          patient_name: selectedPatient?.full_name ?? "Patient",
           notes: buildAppointmentNotes(form.visit_notes, {
             doctorName: form.doctor_name,
+            doctorNotificationPhone: form.notification_phone || "Not provided",
             token: `Q-${form.appointment_date.replaceAll("-", "").slice(4)}-${String(
               queuePosition,
             ).padStart(3, "0")}`,
@@ -330,11 +444,67 @@ function ApptForm({
       </div>
       <div>
         <Label>Doctor name *</Label>
+        {doctors.length > 0 ? (
+          <Select
+            value={form.doctor_id || "__manual__"}
+            onValueChange={(value) => {
+              if (value === "__manual__") {
+                setForm({
+                  ...form,
+                  doctor_id: "",
+                  doctor_name: "",
+                  notification_phone: "",
+                });
+                return;
+              }
+
+              const doctor = doctors.find((item) => item.id === value);
+              setForm({
+                ...form,
+                doctor_id: value,
+                doctor_name: doctor?.full_name || "Doctor",
+                notification_phone: doctor?.phone || form.notification_phone,
+              });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select doctor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__manual__">Manual doctor name</SelectItem>
+              {doctors.map((doctor) => (
+                <SelectItem key={doctor.id} value={doctor.id}>
+                  {doctor.full_name || "Doctor"} {doctor.phone ? `(${doctor.phone})` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            required
+            value={form.doctor_name}
+            onChange={(e) => update("doctor_name", e.target.value)}
+            placeholder="e.g. Dr Shah"
+          />
+        )}
+        {doctors.length > 0 && !form.doctor_id && (
+          <Input
+            required
+            className="mt-2"
+            value={form.doctor_name}
+            onChange={(e) => update("doctor_name", e.target.value)}
+            placeholder="e.g. Dr Shah"
+          />
+        )}
+      </div>
+      <div>
+        <Label>Notification number {phoneRequired ? "*" : ""}</Label>
         <Input
-          required
-          value={form.doctor_name}
-          onChange={(e) => update("doctor_name", e.target.value)}
-          placeholder="e.g. Dr Shah"
+          required={phoneRequired}
+          type="tel"
+          value={form.notification_phone}
+          onChange={(e) => update("notification_phone", e.target.value)}
+          placeholder="Phone / WhatsApp number"
         />
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
@@ -388,7 +558,13 @@ function ApptForm({
       <DialogFooter>
         <Button
           type="submit"
-          disabled={loading || !form.patient_id || !form.appointment_time || !form.doctor_name}
+          disabled={
+            loading ||
+            !form.patient_id ||
+            !form.appointment_time ||
+            !form.doctor_name ||
+            (phoneRequired && !form.notification_phone)
+          }
           className="bg-gradient-brand text-white hover:opacity-90"
         >
           {loading ? "Saving..." : "Schedule appointment"}
