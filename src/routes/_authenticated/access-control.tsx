@@ -172,7 +172,7 @@ function AccessControlPage() {
           Approve user creation, assign roles, and review role-wise rights.
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <Badge variant="secondary">{access.copy.label}</Badge>
+          <Badge variant="secondary">{access?.copy.label ?? "Admin"}</Badge>
           <span>{superAdminCount > 0 ? "Super Admin exists" : "No Super Admin assigned yet"}</span>
         </div>
       </div>

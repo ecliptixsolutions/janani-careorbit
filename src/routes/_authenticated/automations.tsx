@@ -196,7 +196,8 @@ function AutomationsPage() {
         })
         .eq("id", task.appointment.id);
       if (error) {
-        if (isMissingRelationError(error)) throw new Error(missingSchemaMessage("Automation logging"));
+        if (isMissingRelationError(error))
+          throw new Error(missingSchemaMessage("Automation logging"));
         throw error;
       }
     },
@@ -228,7 +229,7 @@ function AutomationsPage() {
           recovery, medicine reminders, and AI chatbot replies.
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <Badge variant="secondary">{access.copy.label}</Badge>
+          <Badge variant="secondary">{access?.copy.label ?? "Role"}</Badge>
           <span>WhatsApp provider credentials are required for unattended automatic sending.</span>
         </div>
       </div>

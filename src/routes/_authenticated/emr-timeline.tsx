@@ -19,11 +19,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useRoleAccess } from "@/hooks/use-role-access";
-import {
-  getAppointmentDoctorName,
-  parseAppointmentWorkflow,
-  stripWorkflowNotes,
-} from "@/lib/appointment-workflow";
+import { getAppointmentDoctorName, stripWorkflowNotes } from "@/lib/appointment-workflow";
 import { isMissingRelationError } from "@/lib/supabase-errors";
 
 export const Route = createFileRoute("/_authenticated/emr-timeline")({
@@ -32,6 +28,9 @@ export const Route = createFileRoute("/_authenticated/emr-timeline")({
 
 type PatientRow = Tables<"patients">;
 type AppointmentRow = Tables<"appointments">;
+type PrescriptionRow = Tables<"prescriptions">;
+type LabOrderRow = Tables<"lab_orders">;
+type InvoiceRow = Tables<"invoices">;
 
 type TimelineEntry = {
   id: string;
@@ -57,7 +56,13 @@ function getGuardianContact(notes: string | null) {
   return match?.[1] ?? "";
 }
 
-function buildTimeline(patient: PatientRow, appointments: AppointmentRow[]): TimelineEntry[] {
+function buildTimeline(
+  patient: PatientRow,
+  appointments: AppointmentRow[],
+  prescriptions: PrescriptionRow[],
+  labOrders: LabOrderRow[],
+  invoices: InvoiceRow[],
+): TimelineEntry[] {
   const entries: TimelineEntry[] = [
     {
       id: `${patient.id}:profile`,
@@ -72,7 +77,6 @@ function buildTimeline(patient: PatientRow, appointments: AppointmentRow[]): Tim
   ];
 
   appointments.forEach((appointment) => {
-    const meta = parseAppointmentWorkflow(appointment.notes);
     const base = `${appointment.id}:${appointment.scheduled_at}`;
     entries.push({
       id: `${base}:visit`,
@@ -92,32 +96,6 @@ function buildTimeline(patient: PatientRow, appointments: AppointmentRow[]): Tim
       icon: Stethoscope,
     });
     entries.push({
-      id: `${base}:prescription`,
-      date: appointment.scheduled_at,
-      title: "Prescription",
-      description: meta.prescriptionPdf
-        ? `Prescription PDF status: ${meta.prescriptionPdf}.`
-        : "Prescription PDF not uploaded yet.",
-      type: "prescription",
-      icon: Pill,
-    });
-    entries.push({
-      id: `${base}:report`,
-      date: appointment.scheduled_at,
-      title: "Lab / radiology report",
-      description: meta.labReport ? `Report status: ${meta.labReport}.` : "No lab report linked.",
-      type: "report",
-      icon: TestTube2,
-    });
-    entries.push({
-      id: `${base}:billing`,
-      date: appointment.scheduled_at,
-      title: "Billing",
-      description: `Billing timeline placeholder for ${appointment.duration_minutes} minute consultation.`,
-      type: "billing",
-      icon: CreditCard,
-    });
-    entries.push({
       id: `${base}:vitals`,
       date: appointment.scheduled_at,
       title: "Vitals",
@@ -125,6 +103,41 @@ function buildTimeline(patient: PatientRow, appointments: AppointmentRow[]): Tim
         "Vitals capture workspace ready for nurse/doctor entry after database table setup.",
       type: "vitals",
       icon: HeartPulse,
+    });
+  });
+
+  prescriptions.forEach((prescription) => {
+    const medicineCount = Array.isArray(prescription.medicines) ? prescription.medicines.length : 0;
+    entries.push({
+      id: `${prescription.id}:prescription`,
+      date: prescription.issued_at ?? prescription.created_at,
+      title: `Prescription ${prescription.prescription_number}`,
+      description: `${prescription.diagnosis || "Diagnosis not specified"} · ${medicineCount} medicine${medicineCount === 1 ? "" : "s"}.`,
+      type: "prescription",
+      icon: Pill,
+    });
+  });
+
+  labOrders.forEach((order) => {
+    entries.push({
+      id: `${order.id}:report`,
+      date: order.completed_at ?? order.ordered_at,
+      title: `${order.test_name} · ${order.status.replace("_", " ")}`,
+      description:
+        order.result || `Lab order ${order.order_number} is ${order.status.replace("_", " ")}.`,
+      type: "report",
+      icon: TestTube2,
+    });
+  });
+
+  invoices.forEach((invoice) => {
+    entries.push({
+      id: `${invoice.id}:billing`,
+      date: invoice.created_at,
+      title: `Invoice ${invoice.invoice_number}`,
+      description: `Total INR ${Number(invoice.total_amount).toFixed(2)} · Paid INR ${Number(invoice.paid_amount).toFixed(2)} · ${invoice.status.replace("_", " ")}.`,
+      type: "billing",
+      icon: CreditCard,
     });
   });
 
@@ -166,6 +179,48 @@ function EmrTimelinePage() {
     },
   });
 
+  const { data: prescriptions = [] } = useQuery<PrescriptionRow[]>({
+    queryKey: ["emr-prescriptions", patientIds.join(",")],
+    enabled: patientIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prescriptions")
+        .select("*")
+        .in("patient_id", patientIds)
+        .order("created_at", { ascending: false });
+      if (error && !isMissingRelationError(error)) throw error;
+      return error ? [] : (data ?? []);
+    },
+  });
+
+  const { data: labOrders = [] } = useQuery<LabOrderRow[]>({
+    queryKey: ["emr-lab-orders", patientIds.join(",")],
+    enabled: patientIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lab_orders")
+        .select("*")
+        .in("patient_id", patientIds)
+        .order("created_at", { ascending: false });
+      if (error && !isMissingRelationError(error)) throw error;
+      return error ? [] : (data ?? []);
+    },
+  });
+
+  const { data: invoices = [] } = useQuery<InvoiceRow[]>({
+    queryKey: ["emr-invoices", patientIds.join(",")],
+    enabled: patientIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .in("patient_id", patientIds)
+        .order("created_at", { ascending: false });
+      if (error && !isMissingRelationError(error)) throw error;
+      return error ? [] : (data ?? []);
+    },
+  });
+
   const filteredPatients = useMemo(() => {
     const term = search.trim().toLowerCase();
     const list = term
@@ -185,7 +240,15 @@ function EmrTimelinePage() {
   const activeAppointments = activePatient
     ? appointments.filter((appointment) => appointment.patient_id === activePatient.id)
     : [];
-  const timeline = activePatient ? buildTimeline(activePatient, activeAppointments) : [];
+  const timeline = activePatient
+    ? buildTimeline(
+        activePatient,
+        activeAppointments,
+        prescriptions.filter((item) => item.patient_id === activePatient.id),
+        labOrders.filter((item) => item.patient_id === activePatient.id),
+        invoices.filter((item) => item.patient_id === activePatient.id),
+      )
+    : [];
 
   if (!(access?.permissions.canViewEmrTimeline ?? false)) {
     return (

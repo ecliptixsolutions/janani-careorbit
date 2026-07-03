@@ -106,6 +106,7 @@ const clinicalRights = permissions({
   canUpdateRecords: yes,
   canAccessQuickConsult: yes,
   canAccessAiVoice: yes,
+  canAccessLab: yes,
   canAccessTelemedicine: yes,
 });
 
@@ -425,19 +426,19 @@ export const moduleDefinitions = [
     title: "Lab Management",
     description: "Lab requests, sample tracking, result workflow, and patient lookup.",
     permission: "canAccessLab" satisfies PermissionKey,
-    status: "Role enabled",
+    status: "Live",
   },
   {
     title: "Pharmacy",
     description: "Prescription, dispensing, stock, and medicine workflow area.",
     permission: "canAccessPharmacy" satisfies PermissionKey,
-    status: "Role enabled",
+    status: "Live",
   },
   {
     title: "Billing & Accounting",
     description: "Billing desk workflow, invoice planning, and accounting access.",
     permission: "canAccessBilling" satisfies PermissionKey,
-    status: "Role enabled",
+    status: "Live",
   },
   {
     title: "Inventory Management",

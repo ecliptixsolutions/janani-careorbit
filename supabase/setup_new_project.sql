@@ -1,6 +1,8 @@
 -- Run this once in the Supabase SQL Editor for a fresh CareOrbit project.
 -- It creates the tables, roles, policies, triggers, and backfills users who signed up
 -- before this schema existed.
+-- Then run migrations/20260702090000_add_notifications.sql and
+-- migrations/20260703120000_add_clinical_operations.sql in timestamp order.
 
 create extension if not exists pgcrypto with schema extensions;
 

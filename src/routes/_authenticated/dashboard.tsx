@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoleAccess } from "@/hooks/use-role-access";
 import { Badge } from "@/components/ui/badge";
@@ -74,7 +75,10 @@ function Dashboard() {
     { label: "Active modules", value: 16, icon: TrendingUp, accent: "text-brand-red" },
   ];
 
-  const roleDashboards = {
+  const roleDashboards: Record<
+    string,
+    { title: string; widgets: Array<[string, string, LucideIcon]> }
+  > = {
     super_admin: {
       title: "Super Admin dashboard",
       widgets: [

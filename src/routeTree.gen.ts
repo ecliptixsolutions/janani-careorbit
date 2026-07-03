@@ -13,12 +13,17 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSystemAdminRouteImport } from './routes/_authenticated/system-admin'
 import { Route as AuthenticatedQueueRouteImport } from './routes/_authenticated/queue'
+import { Route as AuthenticatedPrescriptionsRouteImport } from './routes/_authenticated/prescriptions'
+import { Route as AuthenticatedPharmacyRouteImport } from './routes/_authenticated/pharmacy'
 import { Route as AuthenticatedPatientsRouteImport } from './routes/_authenticated/patients'
 import { Route as AuthenticatedPatientHistoryRouteImport } from './routes/_authenticated/patient-history'
 import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
+import { Route as AuthenticatedLabRouteImport } from './routes/_authenticated/lab'
 import { Route as AuthenticatedEmrTimelineRouteImport } from './routes/_authenticated/emr-timeline'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedAppointmentsRouteImport } from './routes/_authenticated/appointments'
 import { Route as AuthenticatedAccessControlRouteImport } from './routes/_authenticated/access-control'
@@ -42,9 +47,26 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSystemAdminRoute =
+  AuthenticatedSystemAdminRouteImport.update({
+    id: '/system-admin',
+    path: '/system-admin',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedQueueRoute = AuthenticatedQueueRouteImport.update({
   id: '/queue',
   path: '/queue',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPrescriptionsRoute =
+  AuthenticatedPrescriptionsRouteImport.update({
+    id: '/prescriptions',
+    path: '/prescriptions',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPharmacyRoute = AuthenticatedPharmacyRouteImport.update({
+  id: '/pharmacy',
+  path: '/pharmacy',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedPatientsRoute = AuthenticatedPatientsRouteImport.update({
@@ -63,6 +85,11 @@ const AuthenticatedModulesRoute = AuthenticatedModulesRouteImport.update({
   path: '/modules',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedLabRoute = AuthenticatedLabRouteImport.update({
+  id: '/lab',
+  path: '/lab',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedEmrTimelineRoute =
   AuthenticatedEmrTimelineRouteImport.update({
     id: '/emr-timeline',
@@ -72,6 +99,11 @@ const AuthenticatedEmrTimelineRoute =
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAutomationsRoute =
@@ -100,12 +132,17 @@ export interface FileRoutesByFullPath {
   '/access-control': typeof AuthenticatedAccessControlRoute
   '/appointments': typeof AuthenticatedAppointmentsRoute
   '/automations': typeof AuthenticatedAutomationsRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/emr-timeline': typeof AuthenticatedEmrTimelineRoute
+  '/lab': typeof AuthenticatedLabRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/patient-history': typeof AuthenticatedPatientHistoryRoute
   '/patients': typeof AuthenticatedPatientsRoute
+  '/pharmacy': typeof AuthenticatedPharmacyRoute
+  '/prescriptions': typeof AuthenticatedPrescriptionsRoute
   '/queue': typeof AuthenticatedQueueRoute
+  '/system-admin': typeof AuthenticatedSystemAdminRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -114,12 +151,17 @@ export interface FileRoutesByTo {
   '/access-control': typeof AuthenticatedAccessControlRoute
   '/appointments': typeof AuthenticatedAppointmentsRoute
   '/automations': typeof AuthenticatedAutomationsRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/emr-timeline': typeof AuthenticatedEmrTimelineRoute
+  '/lab': typeof AuthenticatedLabRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/patient-history': typeof AuthenticatedPatientHistoryRoute
   '/patients': typeof AuthenticatedPatientsRoute
+  '/pharmacy': typeof AuthenticatedPharmacyRoute
+  '/prescriptions': typeof AuthenticatedPrescriptionsRoute
   '/queue': typeof AuthenticatedQueueRoute
+  '/system-admin': typeof AuthenticatedSystemAdminRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -130,12 +172,17 @@ export interface FileRoutesById {
   '/_authenticated/access-control': typeof AuthenticatedAccessControlRoute
   '/_authenticated/appointments': typeof AuthenticatedAppointmentsRoute
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
+  '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/emr-timeline': typeof AuthenticatedEmrTimelineRoute
+  '/_authenticated/lab': typeof AuthenticatedLabRoute
   '/_authenticated/modules': typeof AuthenticatedModulesRoute
   '/_authenticated/patient-history': typeof AuthenticatedPatientHistoryRoute
   '/_authenticated/patients': typeof AuthenticatedPatientsRoute
+  '/_authenticated/pharmacy': typeof AuthenticatedPharmacyRoute
+  '/_authenticated/prescriptions': typeof AuthenticatedPrescriptionsRoute
   '/_authenticated/queue': typeof AuthenticatedQueueRoute
+  '/_authenticated/system-admin': typeof AuthenticatedSystemAdminRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -146,12 +193,17 @@ export interface FileRouteTypes {
     | '/access-control'
     | '/appointments'
     | '/automations'
+    | '/billing'
     | '/dashboard'
     | '/emr-timeline'
+    | '/lab'
     | '/modules'
     | '/patient-history'
     | '/patients'
+    | '/pharmacy'
+    | '/prescriptions'
     | '/queue'
+    | '/system-admin'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -160,12 +212,17 @@ export interface FileRouteTypes {
     | '/access-control'
     | '/appointments'
     | '/automations'
+    | '/billing'
     | '/dashboard'
     | '/emr-timeline'
+    | '/lab'
     | '/modules'
     | '/patient-history'
     | '/patients'
+    | '/pharmacy'
+    | '/prescriptions'
     | '/queue'
+    | '/system-admin'
   id:
     | '__root__'
     | '/'
@@ -175,12 +232,17 @@ export interface FileRouteTypes {
     | '/_authenticated/access-control'
     | '/_authenticated/appointments'
     | '/_authenticated/automations'
+    | '/_authenticated/billing'
     | '/_authenticated/dashboard'
     | '/_authenticated/emr-timeline'
+    | '/_authenticated/lab'
     | '/_authenticated/modules'
     | '/_authenticated/patient-history'
     | '/_authenticated/patients'
+    | '/_authenticated/pharmacy'
+    | '/_authenticated/prescriptions'
     | '/_authenticated/queue'
+    | '/_authenticated/system-admin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -220,11 +282,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/system-admin': {
+      id: '/_authenticated/system-admin'
+      path: '/system-admin'
+      fullPath: '/system-admin'
+      preLoaderRoute: typeof AuthenticatedSystemAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/queue': {
       id: '/_authenticated/queue'
       path: '/queue'
       fullPath: '/queue'
       preLoaderRoute: typeof AuthenticatedQueueRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/prescriptions': {
+      id: '/_authenticated/prescriptions'
+      path: '/prescriptions'
+      fullPath: '/prescriptions'
+      preLoaderRoute: typeof AuthenticatedPrescriptionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/pharmacy': {
+      id: '/_authenticated/pharmacy'
+      path: '/pharmacy'
+      fullPath: '/pharmacy'
+      preLoaderRoute: typeof AuthenticatedPharmacyRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/patients': {
@@ -248,6 +331,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModulesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/lab': {
+      id: '/_authenticated/lab'
+      path: '/lab'
+      fullPath: '/lab'
+      preLoaderRoute: typeof AuthenticatedLabRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/emr-timeline': {
       id: '/_authenticated/emr-timeline'
       path: '/emr-timeline'
@@ -260,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/automations': {
@@ -290,24 +387,34 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAccessControlRoute: typeof AuthenticatedAccessControlRoute
   AuthenticatedAppointmentsRoute: typeof AuthenticatedAppointmentsRoute
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
+  AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmrTimelineRoute: typeof AuthenticatedEmrTimelineRoute
+  AuthenticatedLabRoute: typeof AuthenticatedLabRoute
   AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
   AuthenticatedPatientHistoryRoute: typeof AuthenticatedPatientHistoryRoute
   AuthenticatedPatientsRoute: typeof AuthenticatedPatientsRoute
+  AuthenticatedPharmacyRoute: typeof AuthenticatedPharmacyRoute
+  AuthenticatedPrescriptionsRoute: typeof AuthenticatedPrescriptionsRoute
   AuthenticatedQueueRoute: typeof AuthenticatedQueueRoute
+  AuthenticatedSystemAdminRoute: typeof AuthenticatedSystemAdminRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccessControlRoute: AuthenticatedAccessControlRoute,
   AuthenticatedAppointmentsRoute: AuthenticatedAppointmentsRoute,
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
+  AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmrTimelineRoute: AuthenticatedEmrTimelineRoute,
+  AuthenticatedLabRoute: AuthenticatedLabRoute,
   AuthenticatedModulesRoute: AuthenticatedModulesRoute,
   AuthenticatedPatientHistoryRoute: AuthenticatedPatientHistoryRoute,
   AuthenticatedPatientsRoute: AuthenticatedPatientsRoute,
+  AuthenticatedPharmacyRoute: AuthenticatedPharmacyRoute,
+  AuthenticatedPrescriptionsRoute: AuthenticatedPrescriptionsRoute,
   AuthenticatedQueueRoute: AuthenticatedQueueRoute,
+  AuthenticatedSystemAdminRoute: AuthenticatedSystemAdminRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

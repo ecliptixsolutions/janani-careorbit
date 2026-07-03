@@ -70,16 +70,24 @@ function ModulesPage() {
           const route =
             module.title === "Patient Management"
               ? "/patients"
-              : module.title === "Quick Consultations" || module.title === "Telemedicine"
-                ? "/appointments"
-                : module.title === "Smart Queue & QR Check-In" ||
-                    module.title === "Facial / QR Patient Check-In"
-                  ? "/queue"
-                  : module.title === "Smart EMR Timeline"
-                    ? "/emr-timeline"
-                    : module.title === "WhatsApp & Follow-up Automation"
-                      ? "/automations"
-                      : null;
+              : module.title === "Quick Consultations"
+                ? "/prescriptions"
+                : module.title === "Telemedicine"
+                  ? "/appointments"
+                  : module.title === "Lab Management"
+                    ? "/lab"
+                    : module.title === "Pharmacy"
+                      ? "/pharmacy"
+                      : module.title === "Billing & Accounting"
+                        ? "/billing"
+                        : module.title === "Smart Queue & QR Check-In" ||
+                            module.title === "Facial / QR Patient Check-In"
+                          ? "/queue"
+                          : module.title === "Smart EMR Timeline"
+                            ? "/emr-timeline"
+                            : module.title === "WhatsApp & Follow-up Automation"
+                              ? "/automations"
+                              : null;
 
           return (
             <div key={module.title} className="rounded-xl border bg-gradient-card p-5 shadow-sm">

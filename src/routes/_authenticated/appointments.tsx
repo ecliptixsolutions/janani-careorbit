@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Clock3, Plus, QrCode, Stethoscope } from "lucide-react";
+import { CalendarDays, Clock3, Pencil, Plus, QrCode, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,6 +85,11 @@ function AppointmentsPage() {
   const { data: access } = useRoleAccess();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editAppointment, setEditAppointment] = useState<AppointmentWithPatient | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const [editDuration, setEditDuration] = useState("30");
+  const [editStatus, setEditStatus] = useState<AppointmentStatus>("scheduled");
 
   const { data: appts = [], isLoading } = useQuery<AppointmentWithPatient[]>({
     queryKey: ["appointments"],
@@ -226,6 +231,59 @@ function AppointmentsPage() {
     onError: (e) => toast.error(e.message),
   });
 
+  const updateMut = useMutation({
+    mutationFn: async () => {
+      if (!editAppointment) throw new Error("Select an appointment");
+      const scheduledAt = new Date(`${editDate}T${editTime}`).toISOString();
+      const { error } = await supabase
+        .from("appointments")
+        .update({
+          scheduled_at: scheduledAt,
+          duration_minutes: Number(editDuration),
+          status: editStatus,
+        })
+        .eq("id", editAppointment.id);
+      if (error) throw error;
+
+      if (editAppointment.doctor_id) {
+        const isCancelled = editStatus === "cancelled";
+        const title = isCancelled ? "Appointment cancelled" : "Appointment updated";
+        const body = `${editAppointment.patients?.full_name ?? "Patient"} appointment is ${
+          isCancelled
+            ? "cancelled"
+            : `now scheduled for ${format(new Date(scheduledAt), "MMM d, yyyy h:mm a")}`
+        }.`;
+        const { error: notificationError } = await supabase.from("notifications").insert({
+          recipient_id: editAppointment.doctor_id,
+          actor_id: user!.id,
+          appointment_id: editAppointment.id,
+          patient_id: editAppointment.patient_id,
+          title,
+          body,
+          channel: "in_app",
+          metadata: { status: editStatus, scheduled_at: scheduledAt },
+        });
+        if (notificationError) throw notificationError;
+      }
+    },
+    onSuccess: () => {
+      toast.success(editStatus === "cancelled" ? "Appointment cancelled" : "Appointment updated");
+      qc.invalidateQueries({ queryKey: ["appointments"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      setEditAppointment(null);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const openEdit = (appointment: AppointmentWithPatient) => {
+    const date = new Date(appointment.scheduled_at);
+    setEditAppointment(appointment);
+    setEditDate(format(date, "yyyy-MM-dd"));
+    setEditTime(format(date, "HH:mm"));
+    setEditDuration(String(appointment.duration_minutes));
+    setEditStatus(appointment.status);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -321,6 +379,7 @@ function AppointmentsPage() {
                 <th className="px-4 py-3 hidden md:table-cell">Problem / disease brief</th>
                 <th className="px-4 py-3 hidden lg:table-cell">Queue</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -357,12 +416,97 @@ function AppointmentsPage() {
                       {appointment.status}
                     </Badge>
                   </td>
+                  <td className="px-4 py-3 text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Reschedule or cancel"
+                      disabled={!(access?.permissions.canUpdateRecords ?? false)}
+                      onClick={() => openEdit(appointment)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      <Dialog open={!!editAppointment} onOpenChange={(value) => !value && setEditAppointment(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update appointment</DialogTitle>
+            <DialogDescription>
+              Reschedule, change duration, confirm, complete or cancel this appointment.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={editDate}
+                onChange={(event) => setEditDate(event.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Time</Label>
+              <Input
+                type="time"
+                value={editTime}
+                onChange={(event) => setEditTime(event.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Duration</Label>
+              <Input
+                type="number"
+                min={5}
+                step={5}
+                value={editDuration}
+                onChange={(event) => setEditDuration(event.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select
+                value={editStatus}
+                onValueChange={(value) => setEditStatus(value as AppointmentStatus)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(
+                    [
+                      "scheduled",
+                      "confirmed",
+                      "completed",
+                      "cancelled",
+                      "no_show",
+                    ] as AppointmentStatus[]
+                  ).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status.replace("_", " ")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => updateMut.mutate()}
+              disabled={updateMut.isPending || !editDate || !editTime}
+              className="bg-gradient-brand text-white"
+            >
+              {updateMut.isPending ? "Saving..." : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
