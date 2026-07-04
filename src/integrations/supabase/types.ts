@@ -149,9 +149,12 @@ export type Database = {
       invoices: {
         Row: {
           appointment_id: string | null;
+          cancellation_reason: string | null;
+          cancelled_at: string | null;
           created_at: string;
           created_by: string | null;
           discount_amount: number;
+          finalized_at: string | null;
           id: string;
           invoice_number: string;
           items: Json;
@@ -163,12 +166,16 @@ export type Database = {
           tax_amount: number;
           total_amount: number;
           updated_at: string;
+          updated_by: string | null;
         };
         Insert: {
           appointment_id?: string | null;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
           created_at?: string;
           created_by?: string | null;
           discount_amount?: number;
+          finalized_at?: string | null;
           id?: string;
           invoice_number?: string;
           items?: Json;
@@ -180,12 +187,16 @@ export type Database = {
           tax_amount?: number;
           total_amount?: number;
           updated_at?: string;
+          updated_by?: string | null;
         };
         Update: {
           appointment_id?: string | null;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
           created_at?: string;
           created_by?: string | null;
           discount_amount?: number;
+          finalized_at?: string | null;
           id?: string;
           invoice_number?: string;
           items?: Json;
@@ -197,6 +208,7 @@ export type Database = {
           tax_amount?: number;
           total_amount?: number;
           updated_at?: string;
+          updated_by?: string | null;
         };
         Relationships: [
           {
@@ -337,8 +349,10 @@ export type Database = {
           invoice_id: string;
           method: string;
           paid_at: string;
+          receipt_number: string;
           received_by: string | null;
           reference: string | null;
+          notes: string | null;
         };
         Insert: {
           amount: number;
@@ -346,8 +360,10 @@ export type Database = {
           invoice_id: string;
           method: string;
           paid_at?: string;
+          receipt_number?: string;
           received_by?: string | null;
           reference?: string | null;
+          notes?: string | null;
         };
         Update: {
           amount?: number;
@@ -355,8 +371,10 @@ export type Database = {
           invoice_id?: string;
           method?: string;
           paid_at?: string;
+          receipt_number?: string;
           received_by?: string | null;
           reference?: string | null;
+          notes?: string | null;
         };
         Relationships: [
           {
@@ -522,6 +540,7 @@ export type Database = {
           avatar_url: string | null;
           created_at: string;
           custom_role_label: string | null;
+          email: string | null;
           full_name: string | null;
           id: string;
           organization: string | null;
@@ -532,6 +551,7 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string;
           custom_role_label?: string | null;
+          email?: string | null;
           full_name?: string | null;
           id: string;
           organization?: string | null;
@@ -542,12 +562,125 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string;
           custom_role_label?: string | null;
+          email?: string | null;
           full_name?: string | null;
           id?: string;
           organization?: string | null;
           phone?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
+      };
+      organization_settings: {
+        Row: {
+          address_line_1: string | null;
+          address_line_2: string | null;
+          authorized_signatory: string | null;
+          city: string | null;
+          created_at: string;
+          currency: string;
+          email: string | null;
+          gstin: string | null;
+          hospital_name: string;
+          id: string;
+          invoice_footer: string | null;
+          invoice_prefix: string;
+          invoice_terms: string | null;
+          legal_name: string | null;
+          logo_path: string | null;
+          pan_registration: string | null;
+          payment_details: string | null;
+          postal_code: string | null;
+          primary_phone: string | null;
+          secondary_phone: string | null;
+          state: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          website: string | null;
+        };
+        Insert: {
+          address_line_1?: string | null;
+          address_line_2?: string | null;
+          authorized_signatory?: string | null;
+          city?: string | null;
+          created_at?: string;
+          currency?: string;
+          email?: string | null;
+          gstin?: string | null;
+          hospital_name?: string;
+          id?: string;
+          invoice_footer?: string | null;
+          invoice_prefix?: string;
+          invoice_terms?: string | null;
+          legal_name?: string | null;
+          logo_path?: string | null;
+          pan_registration?: string | null;
+          payment_details?: string | null;
+          postal_code?: string | null;
+          primary_phone?: string | null;
+          secondary_phone?: string | null;
+          state?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          website?: string | null;
+        };
+        Update: Database["public"]["Tables"]["organization_settings"]["Insert"];
+        Relationships: [];
+      };
+      service_catalog: {
+        Row: {
+          category: string | null;
+          created_at: string;
+          created_by: string | null;
+          default_price: number;
+          id: string;
+          is_active: boolean;
+          service_code: string;
+          service_name: string;
+          tax_rate: number;
+          updated_at: string;
+        };
+        Insert: {
+          category?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          default_price?: number;
+          id?: string;
+          is_active?: boolean;
+          service_code: string;
+          service_name: string;
+          tax_rate?: number;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["service_catalog"]["Insert"]>;
+        Relationships: [];
+      };
+      import_batches: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          error_rows: number;
+          file_name: string;
+          id: string;
+          import_type: string;
+          imported_rows: number;
+          skipped_rows: number;
+          summary: Json;
+          total_rows: number;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          error_rows?: number;
+          file_name: string;
+          id?: string;
+          import_type: string;
+          imported_rows?: number;
+          skipped_rows?: number;
+          summary?: Json;
+          total_rows?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["import_batches"]["Insert"]>;
         Relationships: [];
       };
       user_roles: {
@@ -610,6 +743,30 @@ export type Database = {
           _reference: string;
         };
         Returns: string;
+      };
+      finalize_invoice: {
+        Args: { _invoice_id: string };
+        Returns: Database["public"]["Tables"]["invoices"]["Row"];
+      };
+      cancel_invoice: {
+        Args: { _invoice_id: string; _reason: string };
+        Returns: Database["public"]["Tables"]["invoices"]["Row"];
+      };
+      import_patients: {
+        Args: { _file_name: string; _rows: Json };
+        Returns: Json;
+      };
+      import_pharmacy: {
+        Args: { _file_name: string; _rows: Json; _update_existing?: boolean };
+        Returns: Json;
+      };
+      import_services: {
+        Args: { _file_name: string; _rows: Json };
+        Returns: Json;
+      };
+      import_appointments: {
+        Args: { _file_name: string; _rows: Json };
+        Returns: Json;
       };
     };
     Enums: {

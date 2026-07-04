@@ -306,7 +306,7 @@ function LabPage() {
                   {order.priority === "urgent" && <Badge variant="destructive">Urgent</Badge>}
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  {order.order_number} · {order.patients?.full_name} · {order.patients?.mrn}
+                  {order.order_number} - {order.patients?.full_name} - {order.patients?.mrn}
                 </div>
                 {order.result && <p className="mt-2 text-sm">Result: {order.result}</p>}
               </div>
@@ -325,7 +325,7 @@ function LabPage() {
           <DialogHeader>
             <DialogTitle>Update lab result</DialogTitle>
             <DialogDescription>
-              {selectedOrder?.order_number} · {selectedOrder?.test_name}
+              {selectedOrder?.order_number} - {selectedOrder?.test_name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

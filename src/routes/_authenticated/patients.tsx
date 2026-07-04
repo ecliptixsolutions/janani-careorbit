@@ -131,7 +131,8 @@ function PatientsPage() {
     mutationFn: async (form) => {
       const { error } = await supabase.from("patients").insert({ ...form, created_by: user!.id });
       if (error) {
-        if (isMissingRelationError(error)) throw new Error(missingSchemaMessage("Patient registration"));
+        if (isMissingRelationError(error))
+          throw new Error(missingSchemaMessage("Patient registration"));
         throw error;
       }
     },

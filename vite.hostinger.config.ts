@@ -10,7 +10,12 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   base: "/",
-  plugins: [tanstackRouter({ target: "react", autoCodeSplitting: true }), react(), tailwindcss(), tsconfigPaths()],
+  plugins: [
+    tanstackRouter({ target: "react", autoCodeSplitting: true }),
+    react(),
+    tailwindcss(),
+    tsconfigPaths(),
+  ],
   build: {
     outDir: "dist/hostinger",
     emptyOutDir: true,

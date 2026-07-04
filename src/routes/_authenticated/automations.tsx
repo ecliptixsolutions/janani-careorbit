@@ -277,7 +277,7 @@ function AutomationsPage() {
                         <Badge className={taskTone[task.type]}>{task.type.replace("_", " ")}</Badge>
                       </div>
                       <div className="mt-1 text-sm text-muted-foreground">
-                        {task.appointment.patients?.full_name} ·{" "}
+                        {task.appointment.patients?.full_name} -{" "}
                         {task.appointment.patients?.phone || "No phone saved"}
                       </div>
                       <p className="mt-2 text-sm">{task.message}</p>

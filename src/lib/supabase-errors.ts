@@ -1,4 +1,6 @@
-export function isMissingRelationError(error: { code?: string; message?: string } | null | undefined) {
+export function isMissingRelationError(
+  error: { code?: string; message?: string } | null | undefined,
+) {
   if (!error) return false;
 
   return (

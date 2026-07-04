@@ -73,7 +73,8 @@ export function useRoleAccess() {
         supabase.from("user_roles").select("*").eq("user_id", user.id),
       ]);
 
-      if (profileResult.error && !isMissingRelationError(profileResult.error)) throw profileResult.error;
+      if (profileResult.error && !isMissingRelationError(profileResult.error))
+        throw profileResult.error;
       if (roleResult.error && !isMissingRelationError(roleResult.error)) throw roleResult.error;
 
       const profile: Profile | null = profileResult.error ? null : (profileResult.data ?? null);

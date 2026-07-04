@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSystemAdminRouteImport } from './routes/_authenticated/system-admin'
@@ -19,8 +21,10 @@ import { Route as AuthenticatedPrescriptionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedPharmacyRouteImport } from './routes/_authenticated/pharmacy'
 import { Route as AuthenticatedPatientsRouteImport } from './routes/_authenticated/patients'
 import { Route as AuthenticatedPatientHistoryRouteImport } from './routes/_authenticated/patient-history'
+import { Route as AuthenticatedOrganizationSettingsRouteImport } from './routes/_authenticated/organization-settings'
 import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
 import { Route as AuthenticatedLabRouteImport } from './routes/_authenticated/lab'
+import { Route as AuthenticatedImportsRouteImport } from './routes/_authenticated/imports'
 import { Route as AuthenticatedEmrTimelineRouteImport } from './routes/_authenticated/emr-timeline'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
@@ -33,9 +37,19 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -80,6 +94,12 @@ const AuthenticatedPatientHistoryRoute =
     path: '/patient-history',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedOrganizationSettingsRoute =
+  AuthenticatedOrganizationSettingsRouteImport.update({
+    id: '/organization-settings',
+    path: '/organization-settings',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedModulesRoute = AuthenticatedModulesRouteImport.update({
   id: '/modules',
   path: '/modules',
@@ -88,6 +108,11 @@ const AuthenticatedModulesRoute = AuthenticatedModulesRouteImport.update({
 const AuthenticatedLabRoute = AuthenticatedLabRouteImport.update({
   id: '/lab',
   path: '/lab',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedImportsRoute = AuthenticatedImportsRouteImport.update({
+  id: '/imports',
+  path: '/imports',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedEmrTimelineRoute =
@@ -127,7 +152,9 @@ const AuthenticatedAccessControlRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/access-control': typeof AuthenticatedAccessControlRoute
   '/appointments': typeof AuthenticatedAppointmentsRoute
@@ -135,8 +162,10 @@ export interface FileRoutesByFullPath {
   '/billing': typeof AuthenticatedBillingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/emr-timeline': typeof AuthenticatedEmrTimelineRoute
+  '/imports': typeof AuthenticatedImportsRoute
   '/lab': typeof AuthenticatedLabRoute
   '/modules': typeof AuthenticatedModulesRoute
+  '/organization-settings': typeof AuthenticatedOrganizationSettingsRoute
   '/patient-history': typeof AuthenticatedPatientHistoryRoute
   '/patients': typeof AuthenticatedPatientsRoute
   '/pharmacy': typeof AuthenticatedPharmacyRoute
@@ -146,7 +175,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/access-control': typeof AuthenticatedAccessControlRoute
   '/appointments': typeof AuthenticatedAppointmentsRoute
@@ -154,8 +185,10 @@ export interface FileRoutesByTo {
   '/billing': typeof AuthenticatedBillingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/emr-timeline': typeof AuthenticatedEmrTimelineRoute
+  '/imports': typeof AuthenticatedImportsRoute
   '/lab': typeof AuthenticatedLabRoute
   '/modules': typeof AuthenticatedModulesRoute
+  '/organization-settings': typeof AuthenticatedOrganizationSettingsRoute
   '/patient-history': typeof AuthenticatedPatientHistoryRoute
   '/patients': typeof AuthenticatedPatientsRoute
   '/pharmacy': typeof AuthenticatedPharmacyRoute
@@ -167,7 +200,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/access-control': typeof AuthenticatedAccessControlRoute
   '/_authenticated/appointments': typeof AuthenticatedAppointmentsRoute
@@ -175,8 +210,10 @@ export interface FileRoutesById {
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/emr-timeline': typeof AuthenticatedEmrTimelineRoute
+  '/_authenticated/imports': typeof AuthenticatedImportsRoute
   '/_authenticated/lab': typeof AuthenticatedLabRoute
   '/_authenticated/modules': typeof AuthenticatedModulesRoute
+  '/_authenticated/organization-settings': typeof AuthenticatedOrganizationSettingsRoute
   '/_authenticated/patient-history': typeof AuthenticatedPatientHistoryRoute
   '/_authenticated/patients': typeof AuthenticatedPatientsRoute
   '/_authenticated/pharmacy': typeof AuthenticatedPharmacyRoute
@@ -188,7 +225,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forgot-password'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/access-control'
     | '/appointments'
@@ -196,8 +235,10 @@ export interface FileRouteTypes {
     | '/billing'
     | '/dashboard'
     | '/emr-timeline'
+    | '/imports'
     | '/lab'
     | '/modules'
+    | '/organization-settings'
     | '/patient-history'
     | '/patients'
     | '/pharmacy'
@@ -207,7 +248,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/forgot-password'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/access-control'
     | '/appointments'
@@ -215,8 +258,10 @@ export interface FileRouteTypes {
     | '/billing'
     | '/dashboard'
     | '/emr-timeline'
+    | '/imports'
     | '/lab'
     | '/modules'
+    | '/organization-settings'
     | '/patient-history'
     | '/patients'
     | '/pharmacy'
@@ -227,7 +272,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/forgot-password'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/_authenticated/access-control'
     | '/_authenticated/appointments'
@@ -235,8 +282,10 @@ export interface FileRouteTypes {
     | '/_authenticated/billing'
     | '/_authenticated/dashboard'
     | '/_authenticated/emr-timeline'
+    | '/_authenticated/imports'
     | '/_authenticated/lab'
     | '/_authenticated/modules'
+    | '/_authenticated/organization-settings'
     | '/_authenticated/patient-history'
     | '/_authenticated/patients'
     | '/_authenticated/pharmacy'
@@ -248,7 +297,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
 }
 
@@ -261,11 +312,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -324,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientHistoryRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/organization-settings': {
+      id: '/_authenticated/organization-settings'
+      path: '/organization-settings'
+      fullPath: '/organization-settings'
+      preLoaderRoute: typeof AuthenticatedOrganizationSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/modules': {
       id: '/_authenticated/modules'
       path: '/modules'
@@ -336,6 +408,13 @@ declare module '@tanstack/react-router' {
       path: '/lab'
       fullPath: '/lab'
       preLoaderRoute: typeof AuthenticatedLabRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/imports': {
+      id: '/_authenticated/imports'
+      path: '/imports'
+      fullPath: '/imports'
+      preLoaderRoute: typeof AuthenticatedImportsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/emr-timeline': {
@@ -390,8 +469,10 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmrTimelineRoute: typeof AuthenticatedEmrTimelineRoute
+  AuthenticatedImportsRoute: typeof AuthenticatedImportsRoute
   AuthenticatedLabRoute: typeof AuthenticatedLabRoute
   AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
+  AuthenticatedOrganizationSettingsRoute: typeof AuthenticatedOrganizationSettingsRoute
   AuthenticatedPatientHistoryRoute: typeof AuthenticatedPatientHistoryRoute
   AuthenticatedPatientsRoute: typeof AuthenticatedPatientsRoute
   AuthenticatedPharmacyRoute: typeof AuthenticatedPharmacyRoute
@@ -407,8 +488,11 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmrTimelineRoute: AuthenticatedEmrTimelineRoute,
+  AuthenticatedImportsRoute: AuthenticatedImportsRoute,
   AuthenticatedLabRoute: AuthenticatedLabRoute,
   AuthenticatedModulesRoute: AuthenticatedModulesRoute,
+  AuthenticatedOrganizationSettingsRoute:
+    AuthenticatedOrganizationSettingsRoute,
   AuthenticatedPatientHistoryRoute: AuthenticatedPatientHistoryRoute,
   AuthenticatedPatientsRoute: AuthenticatedPatientsRoute,
   AuthenticatedPharmacyRoute: AuthenticatedPharmacyRoute,
@@ -424,7 +508,9 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport

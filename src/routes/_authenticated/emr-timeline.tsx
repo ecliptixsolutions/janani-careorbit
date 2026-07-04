@@ -112,7 +112,7 @@ function buildTimeline(
       id: `${prescription.id}:prescription`,
       date: prescription.issued_at ?? prescription.created_at,
       title: `Prescription ${prescription.prescription_number}`,
-      description: `${prescription.diagnosis || "Diagnosis not specified"} · ${medicineCount} medicine${medicineCount === 1 ? "" : "s"}.`,
+      description: `${prescription.diagnosis || "Diagnosis not specified"} - ${medicineCount} medicine${medicineCount === 1 ? "" : "s"}.`,
       type: "prescription",
       icon: Pill,
     });
@@ -122,7 +122,7 @@ function buildTimeline(
     entries.push({
       id: `${order.id}:report`,
       date: order.completed_at ?? order.ordered_at,
-      title: `${order.test_name} · ${order.status.replace("_", " ")}`,
+      title: `${order.test_name} - ${order.status.replace("_", " ")}`,
       description:
         order.result || `Lab order ${order.order_number} is ${order.status.replace("_", " ")}.`,
       type: "report",
@@ -135,7 +135,7 @@ function buildTimeline(
       id: `${invoice.id}:billing`,
       date: invoice.created_at,
       title: `Invoice ${invoice.invoice_number}`,
-      description: `Total INR ${Number(invoice.total_amount).toFixed(2)} · Paid INR ${Number(invoice.paid_amount).toFixed(2)} · ${invoice.status.replace("_", " ")}.`,
+      description: `Total INR ${Number(invoice.total_amount).toFixed(2)} - Paid INR ${Number(invoice.paid_amount).toFixed(2)} - ${invoice.status.replace("_", " ")}.`,
       type: "billing",
       icon: CreditCard,
     });
@@ -317,7 +317,7 @@ function EmrTimelinePage() {
                       <Badge variant="outline">{visitCount} visits</Badge>
                     </div>
                     <div className="mt-2 text-xs text-muted-foreground">
-                      {patient.phone || "-"} · Guardian {getGuardianContact(patient.notes) || "-"}
+                      {patient.phone || "-"} - Guardian {getGuardianContact(patient.notes) || "-"}
                     </div>
                   </button>
                 );
@@ -334,7 +334,7 @@ function EmrTimelinePage() {
                   <div>
                     <h2 className="text-xl font-semibold">{activePatient.full_name}</h2>
                     <p className="text-sm text-muted-foreground">
-                      {activePatient.mrn} · {activePatient.phone || "No phone"} · Blood{" "}
+                      {activePatient.mrn} - {activePatient.phone || "No phone"} - Blood{" "}
                       {activePatient.blood_group || "-"}
                     </p>
                   </div>

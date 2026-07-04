@@ -19,6 +19,7 @@ export type PermissionKey =
   | "canManageUsers"
   | "canApproveUsers"
   | "canManageRoles"
+  | "canManageImports"
   | "canUpdateRecords"
   | "canDeleteRecords"
   | "canAccessIpdOpd"
@@ -78,6 +79,7 @@ function permissions(overrides: Partial<RolePermissions>): RolePermissions {
     canManageUsers: no,
     canApproveUsers: no,
     canManageRoles: no,
+    canManageImports: no,
     canUpdateRecords: no,
     canDeleteRecords: no,
     canAccessIpdOpd: no,
@@ -120,6 +122,7 @@ const operationsRights = permissions({
   canManageAutomations: yes,
   canAccessFacialCheckIn: yes,
   canUpdateRecords: yes,
+  canManageImports: yes,
   canAccessIpdOpd: yes,
   canAccessMedicalStaff: yes,
   canAccessInventory: yes,
@@ -141,6 +144,7 @@ const fullAdminRights = permissions({
   canManageRoles: yes,
   canUpdateRecords: yes,
   canDeleteRecords: yes,
+  canManageImports: yes,
   canAccessIpdOpd: yes,
   canAccessMedicalStaff: yes,
   canAccessQuickConsult: yes,
@@ -215,6 +219,7 @@ export const roleDefinitions: Record<RoleKey, RoleDefinition> = {
       canViewEmrTimeline: yes,
       canAccessPharmacy: yes,
       canUpdateRecords: yes,
+      canManageImports: yes,
     }),
   },
   nurse: {
@@ -236,6 +241,7 @@ export const roleDefinitions: Record<RoleKey, RoleDefinition> = {
       canAccessIpdOpd: yes,
       canAccessQuickConsult: yes,
       canUpdateRecords: yes,
+      canManageImports: yes,
     }),
   },
   lab_technician: {
@@ -267,6 +273,7 @@ export const roleDefinitions: Record<RoleKey, RoleDefinition> = {
       canViewEmrTimeline: yes,
       canAccessBilling: yes,
       canUpdateRecords: yes,
+      canManageImports: yes,
     }),
   },
   custom: {

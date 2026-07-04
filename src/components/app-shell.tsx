@@ -8,12 +8,14 @@ import {
   FileText,
   FlaskConical,
   History,
+  Import,
   LayoutDashboard,
   LayoutGrid,
   ListOrdered,
   LogOut,
   Pill,
   ReceiptIndianRupee,
+  Settings,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -68,6 +70,18 @@ const items = [
     permission: "canManageAutomations",
   },
   { to: "/modules", label: "Modules", icon: LayoutGrid, permission: "canViewModules" },
+  {
+    to: "/imports",
+    label: "Data Imports",
+    icon: Import,
+    permission: "canManageImports",
+  },
+  {
+    to: "/organization-settings",
+    label: "Hospital Settings",
+    icon: Settings,
+    permission: "canManageUsers",
+  },
   {
     to: "/access-control",
     label: "Access Control",

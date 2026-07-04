@@ -213,7 +213,7 @@ function QueuePage() {
             <div>
               <div className="font-semibold">QR check-in detected</div>
               <p className="text-sm text-muted-foreground">
-                {checkInTarget.appointment.patients?.full_name} · {checkInTarget.token}
+                {checkInTarget.appointment.patients?.full_name} - {checkInTarget.token}
               </p>
             </div>
             <Button
@@ -368,7 +368,7 @@ function QueuePage() {
                   <div key={appointment.id} className="rounded-lg border bg-muted/30 p-3 text-sm">
                     <div className="font-medium">{appointment.patients?.full_name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {appointment.patients?.mrn} · {token}
+                      {appointment.patients?.mrn} - {token}
                     </div>
                   </div>
                 ))}

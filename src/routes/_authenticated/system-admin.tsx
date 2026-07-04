@@ -24,6 +24,9 @@ const backupTables = [
   "lab_orders",
   "pharmacy_items",
   "dispensations",
+  "organization_settings",
+  "service_catalog",
+  "import_batches",
 ] as const;
 
 function SystemAdminPage() {

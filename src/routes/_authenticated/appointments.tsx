@@ -388,7 +388,7 @@ function AppointmentsPage() {
                   <td className="px-4 py-3 font-medium">
                     {format(new Date(appointment.scheduled_at), "MMM d, yyyy")}
                     <div className="text-xs text-muted-foreground">
-                      {format(new Date(appointment.scheduled_at), "h:mm a")} ·{" "}
+                      {format(new Date(appointment.scheduled_at), "h:mm a")} -{" "}
                       {appointment.duration_minutes} min
                     </div>
                   </td>

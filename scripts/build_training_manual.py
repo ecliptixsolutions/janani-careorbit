@@ -251,6 +251,12 @@ def build():
         "In-app notifications are active. External WhatsApp/SMS delivery is not included unless a messaging provider is configured separately.",
         LIGHT_BLUE,
     )
+    callout(
+        doc,
+        "Acceptance status",
+        "Development verification confirms technical behavior. Client UAT remains pending until the client completes the test cases and signs the acceptance section.",
+        LIGHT_TEAL,
+    )
 
     heading(doc, "2. Roles And Access", 1)
     table(
@@ -307,6 +313,23 @@ def build():
     body(
         doc,
         "Always use the profile menu and Sign out when leaving a shared computer. Closing the tab alone is not a secure sign-out.",
+    )
+    heading(doc, "Forgotten password", 2)
+    steps(
+        doc,
+        [
+            "On the sign-in page, select Forgot password?.",
+            "Enter the account email and select Send reset link.",
+            "Open the CareOrbit recovery email and select the secure link.",
+            "Enter and confirm a password that satisfies every displayed requirement.",
+            "Select Update password, then sign in again using the new password.",
+        ],
+    )
+    callout(
+        doc,
+        "Expired link",
+        "If the recovery page says the link is invalid, expired or already used, request a new link. Never forward recovery emails.",
+        LIGHT_BLUE,
     )
 
     heading(doc, "4. Patient Registration And History", 1)
@@ -455,16 +478,33 @@ def build():
 
     page_break(doc)
     heading(doc, "9. Billing, Payments And Receipts", 1)
+    heading(doc, "Configure invoice branding (administrator)", 2)
+    steps(
+        doc,
+        [
+            "Open Hospital Settings.",
+            "Enter the hospital identity, legal, contact, address and tax details.",
+            "Upload a PNG, JPG or WebP logo no larger than 2 MB.",
+            "Enter invoice terms, payment details, footer and authorized signatory.",
+            "Save and verify the logo and hospital details appear in invoice preview.",
+        ],
+    )
     heading(doc, "Create an invoice", 2)
     steps(
         doc,
         [
-            "Open Billing & Payments and select New invoice.",
+            "Open Billing & Payments and select New draft.",
             "Select the patient.",
-            "Add each service or item with quantity and unit price.",
-            "Enter discount, tax and notes when applicable.",
-            "Confirm the total and create the invoice.",
+            "Choose catalogue services or add a custom line with quantity, price and tax rate.",
+            "Enter discount and notes when applicable.",
+            "Confirm the calculated subtotal, tax and total, then save the draft.",
+            "Select Preview and compare patient, hospital and financial details.",
+            "Select Finalize invoice only after the preview is correct.",
         ],
+    )
+    body(
+        doc,
+        "Drafts may be edited or deleted and do not count as patient debt. Finalized invoice financial lines cannot be edited. An unpaid issued invoice may be cancelled only with a reason; paid invoices require a separate refund process.",
     )
     heading(doc, "Record payment", 2)
     steps(
@@ -475,6 +515,7 @@ def build():
             "Choose cash, card, UPI, bank transfer, insurance or other.",
             "Enter a payment reference when applicable and save.",
             "Confirm paid amount, balance and invoice status are updated.",
+            "Select the generated receipt number to download the branded payment receipt PDF.",
         ],
     )
     heading(doc, "Download", 2)
@@ -515,8 +556,45 @@ def build():
         LIGHT_BLUE,
     )
 
+    heading(doc, "11. Controlled Data Imports", 1)
+    body(
+        doc,
+        "Open Data Imports. Only panels allowed for the signed-in role are shown. Use the supplied template whenever possible.",
+    )
+    heading(doc, "Standard import procedure", 2)
+    steps(
+        doc,
+        [
+            "Select Template and enter data without formulas or passwords.",
+            "Choose a CSV or XLSX file no larger than 5 MB and 2,000 rows.",
+            "Map each CareOrbit field to the matching file column.",
+            "Review the five-row preview and correct missing required mappings.",
+            "For pharmacy updates, enable existing-record updates only after confirming SKU and batch matches.",
+            "Select the confirmation checkbox and then Confirm import.",
+            "Review imported and skipped totals; download the error report when rows were rejected.",
+        ],
+    )
+    table(
+        doc,
+        ["Import", "Authorized roles", "Key validation"],
+        [
+            ("Patients", "Admin, Staff, Nurse", "MRN, phone, email and name/date-of-birth duplicates"),
+            ("Pharmacy", "Admin, Pharmacist", "SKU/batch, expiry, quantity and price"),
+            ("Billing services", "Admin, Billing Operator", "Unique code, price, tax and active status"),
+            ("Appointments", "Admin, Staff, Nurse", "Existing MRN/doctor, date/time and doctor conflict"),
+            ("Staff invitations", "Admin", "Email, supported role and secure activation email; no passwords"),
+        ],
+        widths=[1.35, 1.65, 3.75],
+    )
+    callout(
+        doc,
+        "Import safety",
+        "A skipped row is not silently corrected. Review its error, correct the source file and import that row again.",
+        LIGHT_BLUE,
+    )
+
     page_break(doc)
-    heading(doc, "11. User Acceptance Testing", 1)
+    heading(doc, "12. User Acceptance Testing", 1)
     body(
         doc,
         "Use test data only. Enter Pass or Fail in the Result column. A failed case must include notes and be repeated after correction.",
@@ -534,6 +612,36 @@ def build():
             ("UAT-08", "Staff", "Cancelled appointment shows cancelled status.", "____", ""),
             ("UAT-09", "Staff", "Queue status changes without duplicate entries.", "____", ""),
             ("UAT-10", "Doctor", "Patient EMR timeline opens for the correct MRN.", "____", ""),
+        ],
+    )
+    add_uat_table(
+        doc,
+        [
+            ("UAT-31", "All", "Forgot-password request shows a generic success message.", "____", ""),
+            ("UAT-32", "All", "Recovery email opens reset page and accepts a strong new password.", "____", ""),
+            ("UAT-33", "All", "Expired/used recovery link is rejected.", "____", ""),
+            ("UAT-34", "Admin", "Hospital profile and invoice text save and reload.", "____", ""),
+            ("UAT-35", "Admin", "Valid logo uploads; invalid type/oversize logo is rejected.", "____", ""),
+            ("UAT-36", "Billing", "Draft saves without becoming outstanding patient debt.", "____", ""),
+            ("UAT-37", "Billing", "Draft edit and delete work; finalized lines cannot be changed.", "____", ""),
+            ("UAT-38", "Billing", "Preview and invoice PDF show matching branding and totals.", "____", ""),
+            ("UAT-39", "Billing", "Cancellation requires a reason and preserves audit history.", "____", ""),
+            ("UAT-40", "Billing", "Payment receipt PDF has receipt/invoice numbers and balance.", "____", ""),
+        ],
+    )
+    add_uat_table(
+        doc,
+        [
+            ("UAT-41", "Staff", "Patient template downloads and valid CSV/XLSX imports.", "____", ""),
+            ("UAT-42", "Staff", "Duplicate patient is skipped with a row error.", "____", ""),
+            ("UAT-43", "Pharmacist", "Pharmacy import skips matching batch without confirmation.", "____", ""),
+            ("UAT-44", "Pharmacist", "Confirmed matching batch update changes intended values.", "____", ""),
+            ("UAT-45", "Billing", "Service import updates catalogue and service is selectable.", "____", ""),
+            ("UAT-46", "Staff", "Appointment import rejects missing MRN/doctor and conflicts.", "____", ""),
+            ("UAT-47", "Doctor", "One notification appears for each successful imported appointment.", "____", ""),
+            ("UAT-48", "Admin", "Staff import sends activation email without importing passwords.", "____", ""),
+            ("UAT-49", "All", "Formula, invalid-file and oversized-file imports are rejected.", "____", ""),
+            ("UAT-50", "All", "Unauthorized roles cannot see or execute import/settings actions.", "____", ""),
         ],
     )
     add_uat_table(
@@ -568,12 +676,13 @@ def build():
     )
 
     page_break(doc)
-    heading(doc, "12. Training Checklist", 1)
+    heading(doc, "13. Training Checklist", 1)
     table(
         doc,
         ["Training item", "Completed", "Trainer notes"],
         [
             ("Login, navigation and secure sign-out", "☐", ""),
+            ("Forgot-password and reset-password recovery", "☐", ""),
             ("Role permissions and restricted access", "☐", ""),
             ("Patient registration and history", "☐", ""),
             ("Appointment, reschedule, cancel and queue", "☐", ""),
@@ -581,6 +690,8 @@ def build():
             ("Laboratory order and result", "☐", ""),
             ("Pharmacy stock and dispensing", "☐", ""),
             ("Billing, payment and receipt", "☐", ""),
+            ("Hospital branding and invoice configuration", "☐", ""),
+            ("CSV/XLSX mapping, preview, import and error reports", "☐", ""),
             ("Notifications", "☐", ""),
             ("PDF, Excel and JSON downloads", "☐", ""),
             ("Audit and backup handling", "☐", ""),
@@ -604,7 +715,7 @@ def build():
     )
 
     page_break(doc)
-    heading(doc, "13. Security And Operating Rules", 1)
+    heading(doc, "14. Security And Operating Rules", 1)
     bullets(
         doc,
         [
@@ -615,6 +726,8 @@ def build():
             "Do not store exported patient files on personal devices or unapproved cloud drives.",
             "Sign out from shared computers and report lost credentials immediately.",
             "Run client-approved backups on a documented schedule and test recovery separately.",
+            "Never place passwords in staff import files; invitations must use secure activation emails.",
+            "Review invoice drafts before finalization because finalized financial lines are locked.",
         ],
     )
     heading(doc, "Client Acceptance", 1)

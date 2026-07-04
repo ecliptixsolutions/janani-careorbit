@@ -9,6 +9,9 @@ export default tseslint.config(
   {
     ignores: [
       "dist/**",
+      "artifacts/**",
+      "hostinger-upload/**",
+      "hostinger-upload-optimized/**",
       "oehealth-static-upload/**",
       ".output/**",
       ".vinxi/**",

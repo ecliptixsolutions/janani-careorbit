@@ -355,7 +355,7 @@ function PrescriptionsPage() {
                     <Badge variant="secondary">{prescription.status}</Badge>
                   </div>
                   <div className="mt-1 text-sm text-muted-foreground">
-                    {prescription.patients?.full_name} · {prescription.patients?.mrn} · {doctorName}
+                    {prescription.patients?.full_name} - {prescription.patients?.mrn} - {doctorName}
                   </div>
                   <p className="mt-2 text-sm">
                     {prescription.diagnosis || "Diagnosis not specified"}
