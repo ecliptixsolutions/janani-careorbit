@@ -13,6 +13,8 @@ export type PermissionKey =
   | "canViewQueue"
   | "canManageQueue"
   | "canViewEmrTimeline"
+  | "canViewPrescriptions"
+  | "canCreatePrescriptions"
   | "canManageAutomations"
   | "canAccessFacialCheckIn"
   | "canViewModules"
@@ -73,6 +75,8 @@ function permissions(overrides: Partial<RolePermissions>): RolePermissions {
     canViewQueue: no,
     canManageQueue: no,
     canViewEmrTimeline: no,
+    canViewPrescriptions: no,
+    canCreatePrescriptions: no,
     canManageAutomations: no,
     canAccessFacialCheckIn: no,
     canViewModules: yes,
@@ -105,6 +109,8 @@ const clinicalRights = permissions({
   canScheduleAppointments: yes,
   canViewQueue: yes,
   canViewEmrTimeline: yes,
+  canViewPrescriptions: yes,
+  canCreatePrescriptions: yes,
   canUpdateRecords: yes,
   canAccessQuickConsult: yes,
   canAccessAiVoice: yes,
@@ -137,6 +143,8 @@ const fullAdminRights = permissions({
   canViewQueue: yes,
   canManageQueue: yes,
   canViewEmrTimeline: yes,
+  canViewPrescriptions: yes,
+  canCreatePrescriptions: yes,
   canManageAutomations: yes,
   canAccessFacialCheckIn: yes,
   canManageUsers: yes,
@@ -217,6 +225,7 @@ export const roleDefinitions: Record<RoleKey, RoleDefinition> = {
       canViewPatientHistory: yes,
       canViewAppointments: yes,
       canViewEmrTimeline: yes,
+      canViewPrescriptions: yes,
       canAccessPharmacy: yes,
       canUpdateRecords: yes,
       canManageImports: yes,
@@ -238,6 +247,7 @@ export const roleDefinitions: Record<RoleKey, RoleDefinition> = {
       canViewQueue: yes,
       canManageQueue: yes,
       canViewEmrTimeline: yes,
+      canViewPrescriptions: yes,
       canAccessIpdOpd: yes,
       canAccessQuickConsult: yes,
       canUpdateRecords: yes,

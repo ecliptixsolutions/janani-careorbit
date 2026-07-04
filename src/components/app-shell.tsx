@@ -53,7 +53,7 @@ const items = [
     to: "/prescriptions",
     label: "Prescriptions",
     icon: FileText,
-    permission: "canAccessQuickConsult",
+    permission: "canViewPrescriptions",
   },
   { to: "/lab", label: "Laboratory", icon: FlaskConical, permission: "canAccessLab" },
   { to: "/pharmacy", label: "Pharmacy", icon: Pill, permission: "canAccessPharmacy" },

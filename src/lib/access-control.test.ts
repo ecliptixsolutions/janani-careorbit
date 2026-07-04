@@ -25,12 +25,21 @@ describe("role access control", () => {
       expect(roleDefinitions[role].permissions.canManageUsers).toBe(true);
       expect(roleDefinitions[role].permissions.canManageRoles).toBe(true);
       expect(roleDefinitions[role].permissions.canDeleteRecords).toBe(true);
+      expect(roleDefinitions[role].permissions.canCreatePrescriptions).toBe(true);
     }
 
     for (const role of nonPrivileged) {
       expect(roleDefinitions[role].permissions.canManageUsers).toBe(false);
       expect(roleDefinitions[role].permissions.canManageRoles).toBe(false);
       expect(roleDefinitions[role].permissions.canDeleteRecords).toBe(false);
+      expect(roleDefinitions[role].permissions.canCreatePrescriptions).toBe(role === "doctor");
+    }
+  });
+
+  it("lets nurses and pharmacists review but not issue prescriptions", () => {
+    for (const role of ["nurse", "pharmacist"] as const) {
+      expect(roleDefinitions[role].permissions.canViewPrescriptions).toBe(true);
+      expect(roleDefinitions[role].permissions.canCreatePrescriptions).toBe(false);
     }
   });
 
