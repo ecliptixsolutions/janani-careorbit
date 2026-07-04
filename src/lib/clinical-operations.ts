@@ -26,14 +26,68 @@ export function money(value: number | string | null | undefined) {
   }).format(Number(value ?? 0));
 }
 
-export function downloadJson(filename: string, value: unknown) {
-  const blob = new Blob([JSON.stringify(value, null, 2)], { type: "application/json" });
+export function downloadBlob(filename: string, blob: Blob) {
   const href = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = href;
   anchor.download = filename;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
   anchor.click();
-  URL.revokeObjectURL(href);
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(href), 1000);
+}
+
+export function downloadJson(filename: string, value: unknown) {
+  const blob = new Blob([JSON.stringify(value, null, 2)], { type: "application/json" });
+  downloadBlob(filename, blob);
+}
+
+export async function downloadExcel(
+  filename: string,
+  sheets: Array<{ name: string; rows: Record<string, unknown>[] }>,
+) {
+  const { default: writeXlsxFile } = await import("write-excel-file/browser");
+  const workbookSheets = sheets.map(({ name, rows }) => {
+    const keys = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
+    const data = [
+      keys.map((key) => ({
+        value: key,
+        fontWeight: "bold" as const,
+        textColor: "#FFFFFF",
+        backgroundColor: "#0F766E",
+      })),
+      ...rows.map((row) =>
+        keys.map((key) => {
+          const value = row[key];
+          if (value == null) return "";
+          if (
+            typeof value === "string" ||
+            typeof value === "number" ||
+            typeof value === "boolean"
+          ) {
+            return value;
+          }
+          if (value instanceof Date) return value;
+          return JSON.stringify(value);
+        }),
+      ),
+    ];
+    return {
+      data,
+      sheet: name.slice(0, 31),
+      columns: keys.map((key) => ({
+        width: Math.min(
+          40,
+          Math.max(key.length + 2, ...rows.map((row) => String(row[key] ?? "").length + 2)),
+        ),
+      })),
+      stickyRowsCount: keys.length ? 1 : 0,
+    };
+  });
+
+  const blob = await writeXlsxFile(workbookSheets).toBlob();
+  downloadBlob(filename, blob);
 }
 
 export async function downloadPrescriptionPdf(input: {
@@ -102,7 +156,7 @@ export async function downloadPrescriptionPdf(input: {
     left,
     y,
   );
-  pdf.save(`${input.prescriptionNumber}.pdf`);
+  downloadBlob(`${input.prescriptionNumber}.pdf`, pdf.output("blob"));
 }
 
 export async function downloadInvoicePdf(input: {
@@ -154,5 +208,5 @@ export async function downloadInvoicePdf(input: {
     pdf.text(money(Number(value)), 166, y);
     y += 7;
   });
-  pdf.save(`${input.invoiceNumber}.pdf`);
+  downloadBlob(`${input.invoiceNumber}.pdf`, pdf.output("blob"));
 }

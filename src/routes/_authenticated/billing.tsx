@@ -1,13 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CreditCard, FileDown, Plus, ReceiptIndianRupee, Trash2 } from "lucide-react";
+import {
+  CreditCard,
+  FileDown,
+  FileSpreadsheet,
+  Plus,
+  ReceiptIndianRupee,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleAccess } from "@/hooks/use-role-access";
-import { downloadInvoicePdf, jsonArray, money, type InvoiceLine } from "@/lib/clinical-operations";
+import {
+  downloadExcel,
+  downloadInvoicePdf,
+  jsonArray,
+  money,
+  type InvoiceLine,
+} from "@/lib/clinical-operations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -185,128 +198,164 @@ function BillingPage() {
             Create itemized invoices, collect payments and issue PDF receipts.
           </p>
         </div>
-        <Dialog open={invoiceOpen} onOpenChange={setInvoiceOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-brand text-white">
-              <Plus className="mr-2 h-4 w-4" /> New invoice
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Create invoice</DialogTitle>
-              <DialogDescription>Add billable services, discounts and tax.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Patient</Label>
-                <Select value={patientId} onValueChange={setPatientId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select patient" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.full_name} ({patient.mrn})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Invoice items</Label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setLines((current) => [
-                        ...current,
-                        { description: "", quantity: 1, unitPrice: 0 },
-                      ])
-                    }
-                  >
-                    <Plus className="mr-1 h-4 w-4" /> Add item
-                  </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={invoices.length === 0}
+            onClick={() =>
+              downloadExcel(`careorbit-invoices-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+                {
+                  name: "Invoices",
+                  rows: invoices.map((invoice) => ({
+                    "Invoice number": invoice.invoice_number,
+                    Patient: invoice.patients?.full_name ?? "",
+                    MRN: invoice.patients?.mrn ?? "",
+                    Items: jsonArray<InvoiceLine>(invoice.items)
+                      .map((item) => `${item.description} (${item.quantity} x ${item.unitPrice})`)
+                      .join("; "),
+                    Subtotal: Number(invoice.subtotal),
+                    Discount: Number(invoice.discount_amount),
+                    Tax: Number(invoice.tax_amount),
+                    Total: Number(invoice.total_amount),
+                    Paid: Number(invoice.paid_amount),
+                    Balance: Math.max(
+                      Number(invoice.total_amount) - Number(invoice.paid_amount),
+                      0,
+                    ),
+                    Status: invoice.status,
+                    "Created at": invoice.created_at,
+                  })),
+                },
+              ])
+            }
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
+          </Button>
+          <Dialog open={invoiceOpen} onOpenChange={setInvoiceOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-brand text-white">
+                <Plus className="mr-2 h-4 w-4" /> New invoice
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Create invoice</DialogTitle>
+                <DialogDescription>Add billable services, discounts and tax.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Patient</Label>
+                  <Select value={patientId} onValueChange={setPatientId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select patient" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {patients.map((patient) => (
+                        <SelectItem key={patient.id} value={patient.id}>
+                          {patient.full_name} ({patient.mrn})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                {lines.map((line, index) => (
-                  <div
-                    key={index}
-                    className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_100px_140px_auto]"
-                  >
-                    <Input
-                      value={line.description}
-                      onChange={(event) => updateLine(index, "description", event.target.value)}
-                      placeholder="Service or item"
-                    />
-                    <Input
-                      type="number"
-                      min={1}
-                      value={line.quantity}
-                      onChange={(event) => updateLine(index, "quantity", event.target.value)}
-                    />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Invoice items</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setLines((current) => [
+                          ...current,
+                          { description: "", quantity: 1, unitPrice: 0 },
+                        ])
+                      }
+                    >
+                      <Plus className="mr-1 h-4 w-4" /> Add item
+                    </Button>
+                  </div>
+                  {lines.map((line, index) => (
+                    <div
+                      key={index}
+                      className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_100px_140px_auto]"
+                    >
+                      <Input
+                        value={line.description}
+                        onChange={(event) => updateLine(index, "description", event.target.value)}
+                        placeholder="Service or item"
+                      />
+                      <Input
+                        type="number"
+                        min={1}
+                        value={line.quantity}
+                        onChange={(event) => updateLine(index, "quantity", event.target.value)}
+                      />
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={line.unitPrice}
+                        onChange={(event) => updateLine(index, "unitPrice", event.target.value)}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={lines.length === 1}
+                        onClick={() =>
+                          setLines((current) =>
+                            current.filter((_, lineIndex) => lineIndex !== index),
+                          )
+                        }
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <Label>Subtotal</Label>
+                    <Input value={money(subtotal)} disabled />
+                  </div>
+                  <div>
+                    <Label>Discount</Label>
                     <Input
                       type="number"
                       min={0}
-                      step="0.01"
-                      value={line.unitPrice}
-                      onChange={(event) => updateLine(index, "unitPrice", event.target.value)}
+                      value={discount}
+                      onChange={(event) => setDiscount(event.target.value)}
                     />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={lines.length === 1}
-                      onClick={() =>
-                        setLines((current) => current.filter((_, lineIndex) => lineIndex !== index))
-                      }
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
-                ))}
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div>
-                  <Label>Subtotal</Label>
-                  <Input value={money(subtotal)} disabled />
+                  <div>
+                    <Label>Tax</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={tax}
+                      onChange={(event) => setTax(event.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3 text-right text-lg font-semibold">
+                  Total: {money(total)}
                 </div>
                 <div>
-                  <Label>Discount</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={discount}
-                    onChange={(event) => setDiscount(event.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Tax</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={tax}
-                    onChange={(event) => setTax(event.target.value)}
-                  />
+                  <Label>Notes</Label>
+                  <Textarea value={notes} onChange={(event) => setNotes(event.target.value)} />
                 </div>
               </div>
-              <div className="rounded-lg border bg-muted/30 p-3 text-right text-lg font-semibold">
-                Total: {money(total)}
-              </div>
-              <div>
-                <Label>Notes</Label>
-                <Textarea value={notes} onChange={(event) => setNotes(event.target.value)} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={() => createInvoice.mutate()}
-                disabled={createInvoice.isPending || !patientId}
-                className="bg-gradient-brand text-white"
-              >
-                {createInvoice.isPending ? "Creating..." : "Create invoice"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button
+                  onClick={() => createInvoice.mutate()}
+                  disabled={createInvoice.isPending || !patientId}
+                  className="bg-gradient-brand text-white"
+                >
+                  {createInvoice.isPending ? "Creating..." : "Create invoice"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (

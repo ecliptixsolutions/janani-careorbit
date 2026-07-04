@@ -1,13 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileDown, Plus, Stethoscope, Trash2 } from "lucide-react";
+import { FileDown, FileSpreadsheet, Plus, Stethoscope, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleAccess } from "@/hooks/use-role-access";
-import { downloadPrescriptionPdf, jsonArray, type MedicineLine } from "@/lib/clinical-operations";
+import {
+  downloadExcel,
+  downloadPrescriptionPdf,
+  jsonArray,
+  type MedicineLine,
+} from "@/lib/clinical-operations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -175,118 +180,155 @@ function PrescriptionsPage() {
             Issue structured prescriptions and download patient-ready PDFs.
           </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-brand text-white">
-              <Plus className="mr-2 h-4 w-4" /> New prescription
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Issue prescription</DialogTitle>
-              <DialogDescription>
-                Add diagnosis, medicines, dosage instructions, duration and clinical advice.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Patient</Label>
-                <Select value={patientId} onValueChange={setPatientId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select patient" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.full_name} ({patient.mrn})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Diagnosis</Label>
-                <Textarea
-                  value={diagnosis}
-                  onChange={(event) => setDiagnosis(event.target.value)}
-                />
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Medicines</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setMedicines((current) => [...current, { ...emptyMedicine }])}
-                  >
-                    <Plus className="mr-1 h-4 w-4" /> Add medicine
-                  </Button>
-                </div>
-                {medicines.map((medicine, index) => (
-                  <div key={index} className="grid gap-2 rounded-lg border p-3 md:grid-cols-5">
-                    <Input
-                      value={medicine.name}
-                      onChange={(event) => updateMedicine(index, "name", event.target.value)}
-                      placeholder="Medicine"
-                    />
-                    <Input
-                      value={medicine.dosage}
-                      onChange={(event) => updateMedicine(index, "dosage", event.target.value)}
-                      placeholder="Dose"
-                    />
-                    <Input
-                      value={medicine.frequency}
-                      onChange={(event) => updateMedicine(index, "frequency", event.target.value)}
-                      placeholder="Frequency"
-                    />
-                    <Input
-                      value={medicine.duration}
-                      onChange={(event) => updateMedicine(index, "duration", event.target.value)}
-                      placeholder="Duration"
-                    />
-                    <div className="flex gap-2">
-                      <Input
-                        value={medicine.instructions}
-                        onChange={(event) =>
-                          updateMedicine(index, "instructions", event.target.value)
-                        }
-                        placeholder="Instructions"
-                      />
-                      {medicines.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setMedicines((current) =>
-                              current.filter((_, medicineIndex) => medicineIndex !== index),
-                            )
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <Label>Advice</Label>
-                <Textarea value={advice} onChange={(event) => setAdvice(event.target.value)} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={() => createPrescription.mutate()}
-                disabled={createPrescription.isPending || !patientId}
-                className="bg-gradient-brand text-white"
-              >
-                {createPrescription.isPending ? "Issuing..." : "Issue prescription"}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={prescriptions.length === 0}
+            onClick={() =>
+              downloadExcel(
+                `careorbit-prescriptions-${new Date().toISOString().slice(0, 10)}.xlsx`,
+                [
+                  {
+                    name: "Prescriptions",
+                    rows: prescriptions.map((prescription) => ({
+                      "Prescription number": prescription.prescription_number,
+                      Patient: prescription.patients?.full_name ?? "",
+                      MRN: prescription.patients?.mrn ?? "",
+                      Doctor:
+                        profiles.find((profile) => profile.id === prescription.doctor_id)
+                          ?.full_name ?? "CareOrbit Doctor",
+                      Diagnosis: prescription.diagnosis ?? "",
+                      Medicines: jsonArray<MedicineLine>(prescription.medicines)
+                        .map((medicine) =>
+                          [medicine.name, medicine.dosage, medicine.frequency, medicine.duration]
+                            .filter(Boolean)
+                            .join(" "),
+                        )
+                        .join("; "),
+                      Advice: prescription.advice ?? "",
+                      Status: prescription.status,
+                      "Issued at": prescription.issued_at ?? prescription.created_at,
+                    })),
+                  },
+                ],
+              )
+            }
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-brand text-white">
+                <Plus className="mr-2 h-4 w-4" /> New prescription
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Issue prescription</DialogTitle>
+                <DialogDescription>
+                  Add diagnosis, medicines, dosage instructions, duration and clinical advice.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Patient</Label>
+                  <Select value={patientId} onValueChange={setPatientId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select patient" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {patients.map((patient) => (
+                        <SelectItem key={patient.id} value={patient.id}>
+                          {patient.full_name} ({patient.mrn})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Diagnosis</Label>
+                  <Textarea
+                    value={diagnosis}
+                    onChange={(event) => setDiagnosis(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Medicines</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMedicines((current) => [...current, { ...emptyMedicine }])}
+                    >
+                      <Plus className="mr-1 h-4 w-4" /> Add medicine
+                    </Button>
+                  </div>
+                  {medicines.map((medicine, index) => (
+                    <div key={index} className="grid gap-2 rounded-lg border p-3 md:grid-cols-5">
+                      <Input
+                        value={medicine.name}
+                        onChange={(event) => updateMedicine(index, "name", event.target.value)}
+                        placeholder="Medicine"
+                      />
+                      <Input
+                        value={medicine.dosage}
+                        onChange={(event) => updateMedicine(index, "dosage", event.target.value)}
+                        placeholder="Dose"
+                      />
+                      <Input
+                        value={medicine.frequency}
+                        onChange={(event) => updateMedicine(index, "frequency", event.target.value)}
+                        placeholder="Frequency"
+                      />
+                      <Input
+                        value={medicine.duration}
+                        onChange={(event) => updateMedicine(index, "duration", event.target.value)}
+                        placeholder="Duration"
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          value={medicine.instructions}
+                          onChange={(event) =>
+                            updateMedicine(index, "instructions", event.target.value)
+                          }
+                          placeholder="Instructions"
+                        />
+                        {medicines.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              setMedicines((current) =>
+                                current.filter((_, medicineIndex) => medicineIndex !== index),
+                              )
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <Label>Advice</Label>
+                  <Textarea value={advice} onChange={(event) => setAdvice(event.target.value)} />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={() => createPrescription.mutate()}
+                  disabled={createPrescription.isPending || !patientId}
+                  className="bg-gradient-brand text-white"
+                >
+                  {createPrescription.isPending ? "Issuing..." : "Issue prescription"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (

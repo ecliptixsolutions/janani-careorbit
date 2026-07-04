@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { DatabaseBackup, Download, ShieldCheck } from "lucide-react";
+import { DatabaseBackup, Download, FileSpreadsheet, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoleAccess } from "@/hooks/use-role-access";
-import { downloadJson } from "@/lib/clinical-operations";
+import { downloadExcel, downloadJson } from "@/lib/clinical-operations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -77,6 +77,21 @@ function SystemAdminPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const exportExcel = useMutation({
+    mutationFn: async () => {
+      const results = await Promise.all(
+        backupTables.map(async (table) => {
+          const { data, error } = await supabase.from(table).select("*");
+          if (error) throw new Error(`${table}: ${error.message}`);
+          return { name: table, rows: (data ?? []) as Record<string, unknown>[] };
+        }),
+      );
+      await downloadExcel(`careorbit-data-${new Date().toISOString().slice(0, 10)}.xlsx`, results);
+    },
+    onSuccess: () => toast.success("Excel export created"),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   if (!isAdmin) {
     return (
       <div className="rounded-lg border bg-card p-8 text-center">
@@ -98,18 +113,28 @@ function SystemAdminPage() {
             Review record changes and export a recoverable application-data snapshot.
           </p>
         </div>
-        <Button
-          onClick={() => exportBackup.mutate()}
-          disabled={exportBackup.isPending}
-          className="bg-gradient-brand text-white"
-        >
-          {exportBackup.isPending ? (
-            <DatabaseBackup className="mr-2 h-4 w-4 animate-pulse" />
-          ) : (
-            <Download className="mr-2 h-4 w-4" />
-          )}
-          {exportBackup.isPending ? "Preparing..." : "Export backup"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={() => exportExcel.mutate()}
+            disabled={exportExcel.isPending}
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            {exportExcel.isPending ? "Preparing..." : "Export Excel"}
+          </Button>
+          <Button
+            onClick={() => exportBackup.mutate()}
+            disabled={exportBackup.isPending}
+            className="bg-gradient-brand text-white"
+          >
+            {exportBackup.isPending ? (
+              <DatabaseBackup className="mr-2 h-4 w-4 animate-pulse" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            {exportBackup.isPending ? "Preparing..." : "Export JSON backup"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

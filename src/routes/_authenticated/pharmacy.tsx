@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PackagePlus, Pill, ShoppingBag } from "lucide-react";
+import { FileSpreadsheet, PackagePlus, Pill, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleAccess } from "@/hooks/use-role-access";
-import { money } from "@/lib/clinical-operations";
+import { downloadExcel, money } from "@/lib/clinical-operations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -188,6 +188,39 @@ function PharmacyPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={items.length === 0}
+            onClick={() =>
+              downloadExcel(`careorbit-pharmacy-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+                {
+                  name: "Stock",
+                  rows: items.map((item) => ({
+                    Medicine: item.medicine_name,
+                    SKU: item.sku ?? "",
+                    Batch: item.batch_number ?? "",
+                    Expiry: item.expires_on ?? "",
+                    Stock: item.stock_quantity,
+                    "Reorder level": item.reorder_level,
+                    "Unit price": Number(item.unit_price),
+                    "Low stock": item.stock_quantity <= item.reorder_level ? "Yes" : "No",
+                  })),
+                },
+                {
+                  name: "Dispensations",
+                  rows: dispensations.map((dispensation) => ({
+                    Patient: dispensation.patients?.full_name ?? "",
+                    MRN: dispensation.patients?.mrn ?? "",
+                    Medicine: dispensation.pharmacy_items?.medicine_name ?? "",
+                    Quantity: dispensation.quantity,
+                    "Dispensed at": dispensation.dispensed_at,
+                  })),
+                },
+              ])
+            }
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
+          </Button>
           <Dialog open={stockOpen} onOpenChange={setStockOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">

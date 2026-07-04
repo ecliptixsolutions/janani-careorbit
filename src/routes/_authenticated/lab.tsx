@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FlaskConical, Plus, TestTube2 } from "lucide-react";
+import { FileSpreadsheet, FlaskConical, Plus, TestTube2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleAccess } from "@/hooks/use-role-access";
+import { downloadExcel } from "@/lib/clinical-operations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -192,69 +193,96 @@ function LabPage() {
             Order tests, track samples and record verified results.
           </p>
         </div>
-        {canOrder && (
-          <Dialog open={orderOpen} onOpenChange={setOrderOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-brand text-white">
-                <Plus className="mr-2 h-4 w-4" /> New lab order
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Order laboratory test</DialogTitle>
-                <DialogDescription>
-                  Create a patient-linked investigation request.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label>Patient</Label>
-                  <Select value={patientId} onValueChange={setPatientId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select patient" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {patients.map((patient) => (
-                        <SelectItem key={patient.id} value={patient.id}>
-                          {patient.full_name} ({patient.mrn})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Test name</Label>
-                  <Input
-                    value={testName}
-                    onChange={(event) => setTestName(event.target.value)}
-                    placeholder="CBC, HbA1c, thyroid profile..."
-                  />
-                </div>
-                <div>
-                  <Label>Priority</Label>
-                  <Select value={priority} onValueChange={setPriority}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="routine">Routine</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  onClick={() => createOrder.mutate()}
-                  disabled={createOrder.isPending || !patientId || !testName.trim()}
-                  className="bg-gradient-brand text-white"
-                >
-                  {createOrder.isPending ? "Ordering..." : "Create order"}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={orders.length === 0}
+            onClick={() =>
+              downloadExcel(`careorbit-lab-orders-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+                {
+                  name: "Lab Orders",
+                  rows: orders.map((order) => ({
+                    "Order number": order.order_number,
+                    Patient: order.patients?.full_name ?? "",
+                    MRN: order.patients?.mrn ?? "",
+                    Test: order.test_name,
+                    Priority: order.priority,
+                    Status: order.status,
+                    Result: order.result ?? "",
+                    "Reference range": order.reference_range ?? "",
+                    "Ordered at": order.created_at,
+                    "Completed at": order.completed_at ?? "",
+                  })),
+                },
+              ])
+            }
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
+          </Button>
+          {canOrder && (
+            <Dialog open={orderOpen} onOpenChange={setOrderOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-brand text-white">
+                  <Plus className="mr-2 h-4 w-4" /> New lab order
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Order laboratory test</DialogTitle>
+                  <DialogDescription>
+                    Create a patient-linked investigation request.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Patient</Label>
+                    <Select value={patientId} onValueChange={setPatientId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select patient" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {patients.map((patient) => (
+                          <SelectItem key={patient.id} value={patient.id}>
+                            {patient.full_name} ({patient.mrn})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Test name</Label>
+                    <Input
+                      value={testName}
+                      onChange={(event) => setTestName(event.target.value)}
+                      placeholder="CBC, HbA1c, thyroid profile..."
+                    />
+                  </div>
+                  <div>
+                    <Label>Priority</Label>
+                    <Select value={priority} onValueChange={setPriority}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="routine">Routine</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    onClick={() => createOrder.mutate()}
+                    disabled={createOrder.isPending || !patientId || !testName.trim()}
+                    className="bg-gradient-brand text-white"
+                  >
+                    {createOrder.isPending ? "Ordering..." : "Create order"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
 
       {isLoading ? (
