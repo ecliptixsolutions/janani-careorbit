@@ -19,9 +19,12 @@ function createSupabaseClient() {
     throw new Error(message);
   }
 
+  const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0];
+
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       storage: typeof window !== "undefined" ? localStorage : undefined,
+      storageKey: `careorbit-${projectRef}-auth-v2`,
       persistSession: true,
       autoRefreshToken: true,
     },
