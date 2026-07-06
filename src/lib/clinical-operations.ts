@@ -14,6 +14,18 @@ export type InvoiceLine = {
   unitPrice: number;
   serviceCode?: string;
   taxRate?: number;
+  pharmacyItemId?: string;
+  medicineName?: string;
+  sku?: string;
+  hsnCode?: string;
+  batchNumber?: string;
+  expiryDate?: string;
+  mrp?: number;
+  discountPercent?: number;
+  discountAmount?: number;
+  taxableAmount?: number;
+  taxAmount?: number;
+  amount?: number;
 };
 
 export type InvoiceBrand = {
@@ -25,26 +37,52 @@ export type InvoiceBrand = {
   email?: string;
   website?: string;
   gstin?: string;
+  drugLicenseNumbers?: string[];
+  accentColor?: string;
   terms?: string;
   paymentDetails?: string;
   footer?: string;
   authorizedSignatory?: string;
 };
 
+function currencyAmount(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
 export function calculateInvoiceTotals(lines: InvoiceLine[], discount = 0) {
-  const subtotal = lines.reduce(
-    (total, line) => total + Number(line.quantity) * Number(line.unitPrice),
-    0,
+  const subtotal = currencyAmount(
+    lines.reduce((total, line) => total + Number(line.quantity) * Number(line.unitPrice), 0),
   );
-  const tax = lines.reduce(
-    (total, line) =>
-      total + Number(line.quantity) * Number(line.unitPrice) * (Number(line.taxRate ?? 0) / 100),
-    0,
+  const lineDiscount = currencyAmount(
+    lines.reduce(
+      (total, line) =>
+        total +
+        (line.discountAmount ??
+          Number(line.quantity) *
+            Number(line.unitPrice) *
+            (Number(line.discountPercent ?? 0) / 100)),
+      0,
+    ),
+  );
+  const tax = currencyAmount(
+    lines.reduce(
+      (total, line) =>
+        total +
+        (line.taxAmount ??
+          (Number(line.quantity) * Number(line.unitPrice) -
+            (line.discountAmount ??
+              Number(line.quantity) *
+                Number(line.unitPrice) *
+                (Number(line.discountPercent ?? 0) / 100))) *
+            (Number(line.taxRate ?? 0) / 100)),
+      0,
+    ),
   );
   return {
     subtotal,
+    lineDiscount,
     tax,
-    total: Math.max(subtotal - Number(discount || 0) + tax, 0),
+    total: currencyAmount(Math.max(subtotal - lineDiscount - Number(discount || 0) + tax, 0)),
   };
 }
 
@@ -229,6 +267,10 @@ export async function downloadInvoicePdf(input: {
   total: number;
   paid: number;
   brand: InvoiceBrand;
+  title?: string;
+  cgst?: number;
+  sgst?: number;
+  paymentMethod?: string;
 }) {
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF();
@@ -257,18 +299,19 @@ export async function downloadInvoicePdf(input: {
     input.brand.email,
     input.brand.website,
     input.brand.gstin ? `GSTIN: ${input.brand.gstin}` : "",
+    ...(input.brand.drugLicenseNumbers ?? []).map((value) => `Drug Licence: ${value}`),
   ].filter(Boolean) as string[];
-  businessLines.slice(0, 6).forEach((line, index) => {
+  businessLines.slice(0, 8).forEach((line, index) => {
     pdf.text(line, right, y + 10 + index * 4, { align: "right" });
   });
-  y = 45;
+  y = Math.max(45, 30 + Math.min(businessLines.length, 8) * 4);
   pdf.setDrawColor(30);
   pdf.line(left, y, right, y);
   y += 8;
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(15);
-  pdf.text("TAX INVOICE", left, y);
+  pdf.text(input.title ?? "TAX INVOICE", left, y);
   pdf.setFontSize(9);
   pdf.text(input.invoiceNumber, right, y, { align: "right" });
   y += 6;
@@ -318,31 +361,62 @@ export async function downloadInvoicePdf(input: {
       y = 18;
       drawTableHeader();
     }
-    const description = [item.serviceCode, item.description].filter(Boolean).join(" - ");
+    const itemMeta = [
+      item.batchNumber ? `Batch: ${item.batchNumber}` : "",
+      item.expiryDate ? `Exp: ${new Date(item.expiryDate).toLocaleDateString("en-IN")}` : "",
+      item.hsnCode ? `HSN: ${item.hsnCode}` : "",
+      item.discountPercent ? `Discount: ${item.discountPercent}%` : "",
+      item.taxRate ? `GST: ${item.taxRate}%` : "",
+    ]
+      .filter(Boolean)
+      .join(" | ");
+    const description = [[item.serviceCode, item.description].filter(Boolean).join(" - "), itemMeta]
+      .filter(Boolean)
+      .join("\n");
     const wrapped = pdf.splitTextToSize(description, 105);
     pdf.text(String(index + 1), left + 2, y);
     pdf.text(wrapped, left + 10, y);
     pdf.text(String(item.quantity), 132, y, { align: "right" });
     pdf.text(pdfMoney(item.unitPrice), 158, y, { align: "right" });
-    pdf.text(pdfMoney(item.quantity * item.unitPrice), right - 2, y, { align: "right" });
+    pdf.text(
+      pdfMoney(
+        item.amount ??
+          (item.taxableAmount ??
+            item.quantity * item.unitPrice - Number(item.discountAmount ?? 0)) +
+            Number(item.taxAmount ?? 0),
+      ),
+      right - 2,
+      y,
+      { align: "right" },
+    );
     y += Math.max(7, wrapped.length * 4 + 2);
   });
 
   y += 3;
   pdf.line(116, y, right, y);
   y += 7;
-  [
+  const totalRows: Array<[string, number]> = [
     ["Subtotal", input.subtotal],
     ["Discount", -input.discount],
-    ["Tax", input.tax],
+    ...(input.cgst !== undefined && input.sgst !== undefined
+      ? ([
+          ["CGST", input.cgst],
+          ["SGST", input.sgst],
+        ] as Array<[string, number]>)
+      : ([["Tax", input.tax]] as Array<[string, number]>)),
     ["Total", input.total],
     ["Paid", input.paid],
     ["Balance", Math.max(input.total - input.paid, 0)],
-  ].forEach(([label, value]) => {
+  ];
+  totalRows.forEach(([label, value]) => {
     pdf.text(String(label), 120, y);
     pdf.text(pdfMoney(Number(value)), right - 2, y, { align: "right" });
     y += 7;
   });
+
+  if (input.paymentMethod) {
+    pdf.text(`Payment method: ${input.paymentMethod.toUpperCase()}`, left, y - 7);
+  }
 
   if (input.brand.paymentDetails) {
     y += 3;

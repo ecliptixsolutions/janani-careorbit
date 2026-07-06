@@ -31,6 +31,7 @@ import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedAppointmentsRouteImport } from './routes/_authenticated/appointments'
 import { Route as AuthenticatedAccessControlRouteImport } from './routes/_authenticated/access-control'
+import { Route as AuthenticatedPharmacyBillRouteImport } from './routes/_authenticated/pharmacy_.bill'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -149,6 +150,12 @@ const AuthenticatedAccessControlRoute =
     path: '/access-control',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedPharmacyBillRoute =
+  AuthenticatedPharmacyBillRouteImport.update({
+    id: '/pharmacy_/bill',
+    path: '/pharmacy/bill',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/prescriptions': typeof AuthenticatedPrescriptionsRoute
   '/queue': typeof AuthenticatedQueueRoute
   '/system-admin': typeof AuthenticatedSystemAdminRoute
+  '/pharmacy/bill': typeof AuthenticatedPharmacyBillRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -195,6 +203,7 @@ export interface FileRoutesByTo {
   '/prescriptions': typeof AuthenticatedPrescriptionsRoute
   '/queue': typeof AuthenticatedQueueRoute
   '/system-admin': typeof AuthenticatedSystemAdminRoute
+  '/pharmacy/bill': typeof AuthenticatedPharmacyBillRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -220,6 +229,7 @@ export interface FileRoutesById {
   '/_authenticated/prescriptions': typeof AuthenticatedPrescriptionsRoute
   '/_authenticated/queue': typeof AuthenticatedQueueRoute
   '/_authenticated/system-admin': typeof AuthenticatedSystemAdminRoute
+  '/_authenticated/pharmacy_/bill': typeof AuthenticatedPharmacyBillRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/prescriptions'
     | '/queue'
     | '/system-admin'
+    | '/pharmacy/bill'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/prescriptions'
     | '/queue'
     | '/system-admin'
+    | '/pharmacy/bill'
   id:
     | '__root__'
     | '/'
@@ -292,6 +304,7 @@ export interface FileRouteTypes {
     | '/_authenticated/prescriptions'
     | '/_authenticated/queue'
     | '/_authenticated/system-admin'
+    | '/_authenticated/pharmacy_/bill'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -459,6 +472,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccessControlRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/pharmacy_/bill': {
+      id: '/_authenticated/pharmacy_/bill'
+      path: '/pharmacy/bill'
+      fullPath: '/pharmacy/bill'
+      preLoaderRoute: typeof AuthenticatedPharmacyBillRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -479,6 +499,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPrescriptionsRoute: typeof AuthenticatedPrescriptionsRoute
   AuthenticatedQueueRoute: typeof AuthenticatedQueueRoute
   AuthenticatedSystemAdminRoute: typeof AuthenticatedSystemAdminRoute
+  AuthenticatedPharmacyBillRoute: typeof AuthenticatedPharmacyBillRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -499,6 +520,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPrescriptionsRoute: AuthenticatedPrescriptionsRoute,
   AuthenticatedQueueRoute: AuthenticatedQueueRoute,
   AuthenticatedSystemAdminRoute: AuthenticatedSystemAdminRoute,
+  AuthenticatedPharmacyBillRoute: AuthenticatedPharmacyBillRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

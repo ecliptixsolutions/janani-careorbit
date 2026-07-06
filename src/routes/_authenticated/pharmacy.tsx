@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileSpreadsheet, PackagePlus, Pill, ShoppingBag } from "lucide-react";
+import { FileSpreadsheet, PackagePlus, Pill, ReceiptIndianRupee, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -48,6 +48,9 @@ function PharmacyPage() {
   const [stock, setStock] = useState("0");
   const [reorder, setReorder] = useState("10");
   const [price, setPrice] = useState("0");
+  const [mrp, setMrp] = useState("0");
+  const [gstRate, setGstRate] = useState("0");
+  const [hsnCode, setHsnCode] = useState("");
   const [patientId, setPatientId] = useState("");
   const [prescriptionId, setPrescriptionId] = useState("__none__");
   const [itemId, setItemId] = useState("");
@@ -120,6 +123,9 @@ function PharmacyPage() {
         stock_quantity: Number(stock || 0),
         reorder_level: Number(reorder || 0),
         unit_price: Number(price || 0),
+        mrp: Number(mrp || price || 0),
+        gst_rate: Number(gstRate || 0),
+        hsn_code: hsnCode || null,
         created_by: user!.id,
       });
       if (error) throw error;
@@ -134,6 +140,9 @@ function PharmacyPage() {
       setExpiry("");
       setStock("0");
       setPrice("0");
+      setMrp("0");
+      setGstRate("0");
+      setHsnCode("");
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -188,6 +197,11 @@ function PharmacyPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button asChild>
+            <Link to="/pharmacy/bill">
+              <ReceiptIndianRupee className="mr-2 h-4 w-4" /> New bill
+            </Link>
+          </Button>
           <Button
             variant="outline"
             disabled={items.length === 0}
@@ -283,6 +297,31 @@ function PharmacyPage() {
                     value={price}
                     onChange={(event) => setPrice(event.target.value)}
                   />
+                </div>
+                <div>
+                  <Label>MRP</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={mrp}
+                    onChange={(event) => setMrp(event.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>GST rate (%)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    value={gstRate}
+                    onChange={(event) => setGstRate(event.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>HSN code</Label>
+                  <Input value={hsnCode} onChange={(event) => setHsnCode(event.target.value)} />
                 </div>
               </div>
               <DialogFooter>
@@ -420,6 +459,7 @@ function PharmacyPage() {
                 <th className="px-4 py-3">Expiry</th>
                 <th className="px-4 py-3">Stock</th>
                 <th className="px-4 py-3">Price</th>
+                <th className="px-4 py-3">GST</th>
               </tr>
             </thead>
             <tbody>
@@ -441,6 +481,7 @@ function PharmacyPage() {
                     </Badge>
                   </td>
                   <td className="px-4 py-3">{money(item.unit_price)}</td>
+                  <td className="px-4 py-3">{Number(item.gst_rate)}%</td>
                 </tr>
               ))}
             </tbody>

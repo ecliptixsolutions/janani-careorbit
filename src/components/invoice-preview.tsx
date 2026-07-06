@@ -15,6 +15,9 @@ export function InvoicePreview({
   tax,
   total,
   paid,
+  title = "TAX INVOICE",
+  cgst,
+  sgst,
 }: {
   brand: InvoiceBrand;
   invoiceNumber: string;
@@ -30,10 +33,16 @@ export function InvoicePreview({
   tax: number;
   total: number;
   paid: number;
+  title?: string;
+  cgst?: number;
+  sgst?: number;
 }) {
   return (
     <div className="mx-auto min-h-[760px] max-w-[760px] bg-white p-8 text-sm text-black shadow-sm">
-      <header className="flex items-start justify-between gap-6 border-b pb-5">
+      <header
+        className="flex items-start justify-between gap-6 border-b-2 pb-5"
+        style={{ borderColor: brand.accentColor ?? "#2563eb" }}
+      >
         <div className="flex h-20 w-40 items-center">
           {brand.logoUrl ? (
             <img src={brand.logoUrl} alt="" className="max-h-full max-w-full object-contain" />
@@ -48,12 +57,15 @@ export function InvoicePreview({
           <div>{[brand.phone, brand.email].filter(Boolean).join(" | ")}</div>
           <div>{brand.website}</div>
           {brand.gstin && <div>GSTIN: {brand.gstin}</div>}
+          {brand.drugLicenseNumbers?.map((license) => (
+            <div key={license}>Drug Licence: {license}</div>
+          ))}
         </div>
       </header>
 
       <div className="mt-5 flex items-start justify-between gap-6">
         <div>
-          <div className="text-lg font-bold">TAX INVOICE</div>
+          <div className="text-lg font-bold">{title}</div>
           <div className="mt-4 font-semibold">Bill to</div>
           <div>{patientName}</div>
           <div>{mrn}</div>
@@ -85,10 +97,32 @@ export function InvoicePreview({
               <td className="px-2 py-2">
                 {item.serviceCode && <span className="mr-2 text-gray-500">{item.serviceCode}</span>}
                 {item.description}
+                {(item.batchNumber || item.expiryDate || item.hsnCode) && (
+                  <div className="mt-1 text-xs text-gray-500">
+                    {[
+                      item.batchNumber ? `Batch: ${item.batchNumber}` : "",
+                      item.expiryDate
+                        ? `Expiry: ${new Date(item.expiryDate).toLocaleDateString("en-IN")}`
+                        : "",
+                      item.hsnCode ? `HSN: ${item.hsnCode}` : "",
+                      item.discountPercent ? `Discount: ${item.discountPercent}%` : "",
+                      item.taxRate ? `GST: ${item.taxRate}%` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" | ")}
+                  </div>
+                )}
               </td>
               <td className="px-2 py-2 text-right">{item.quantity}</td>
               <td className="px-2 py-2 text-right">{money(item.unitPrice)}</td>
-              <td className="px-2 py-2 text-right">{money(item.quantity * item.unitPrice)}</td>
+              <td className="px-2 py-2 text-right">
+                {money(
+                  item.amount ??
+                    (item.taxableAmount ??
+                      item.quantity * item.unitPrice - Number(item.discountAmount ?? 0)) +
+                      Number(item.taxAmount ?? 0),
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -98,7 +132,12 @@ export function InvoicePreview({
         {[
           ["Subtotal", subtotal],
           ["Discount", -discount],
-          ["Tax", tax],
+          ...(cgst !== undefined && sgst !== undefined
+            ? [
+                ["CGST", cgst],
+                ["SGST", sgst],
+              ]
+            : [["Tax", tax]]),
           ["Total", total],
           ["Paid", paid],
           ["Balance", Math.max(total - paid, 0)],

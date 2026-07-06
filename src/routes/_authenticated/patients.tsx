@@ -47,13 +47,24 @@ type PatientFormValues = {
   address: string;
   blood_group: string;
   allergies: string;
+  case_fee: string;
+  sonography_fee: string;
   notes: string;
 };
-type PatientCreatePayload = Omit<
-  PatientFormValues,
-  "date_of_birth" | "emergency_contact_number" | "doctor_name"
-> &
-  Pick<TablesInsert<"patients">, "date_of_birth">;
+type PatientCreatePayload = Pick<
+  TablesInsert<"patients">,
+  | "full_name"
+  | "date_of_birth"
+  | "gender"
+  | "phone"
+  | "email"
+  | "address"
+  | "blood_group"
+  | "allergies"
+  | "case_fee"
+  | "sonography_fee"
+  | "notes"
+>;
 
 const guardianContactPrefix = "Guardian emergency contact:";
 const doctorNamePrefix = "Assigned doctor:";
@@ -266,6 +277,8 @@ function PatientsPage() {
                   <div>Guardian: {getGuardianContact(historyPatient.notes) || "-"}</div>
                   <div>Doctor: {getAssignedDoctor(historyPatient.notes) || "-"}</div>
                   <div>Blood: {historyPatient.blood_group || "-"}</div>
+                  <div>Case fees: {historyPatient.case_fee ?? "-"}</div>
+                  <div>Sonography fees: {historyPatient.sonography_fee ?? "-"}</div>
                 </div>
               </div>
               <div>
@@ -321,6 +334,8 @@ function PatientForm({
     address: "",
     blood_group: "",
     allergies: "",
+    case_fee: "",
+    sonography_fee: "",
     notes: "",
   });
   const update = (k: keyof PatientFormValues, v: string) => setForm({ ...form, [k]: v });
@@ -337,6 +352,8 @@ function PatientForm({
           address: form.address,
           blood_group: form.blood_group,
           allergies: form.allergies,
+          case_fee: form.case_fee === "" ? null : Number(form.case_fee),
+          sonography_fee: form.sonography_fee === "" ? null : Number(form.sonography_fee),
           notes: formatPatientNotes(form.notes, form.emergency_contact_number, form.doctor_name),
           date_of_birth: form.date_of_birth || null,
         });
@@ -413,6 +430,28 @@ function PatientForm({
         <div>
           <Label>Allergies</Label>
           <Input value={form.allergies} onChange={(e) => update("allergies", e.target.value)} />
+        </div>
+        <div>
+          <Label>Case fees (optional)</Label>
+          <Input
+            type="number"
+            min={0}
+            step="0.01"
+            value={form.case_fee}
+            onChange={(e) => update("case_fee", e.target.value)}
+            placeholder="0.00"
+          />
+        </div>
+        <div>
+          <Label>Sonography fees (optional)</Label>
+          <Input
+            type="number"
+            min={0}
+            step="0.01"
+            value={form.sonography_fee}
+            onChange={(e) => update("sonography_fee", e.target.value)}
+            placeholder="0.00"
+          />
         </div>
       </div>
       <div>

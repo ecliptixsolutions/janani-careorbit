@@ -31,6 +31,9 @@ const pharmacyFields: ImportField[] = [
   { key: "quantity", label: "Quantity", required: true, example: 100 },
   { key: "reorder_level", label: "Reorder level", example: 10 },
   { key: "unit_price", label: "Unit price", required: true, example: 2.5 },
+  { key: "mrp", label: "MRP", example: 3 },
+  { key: "gst_rate", label: "GST rate", example: 12 },
+  { key: "hsn_code", label: "HSN code", example: "30049099" },
 ];
 
 const serviceFields: ImportField[] = [

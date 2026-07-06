@@ -244,6 +244,60 @@ function OrganizationSettingsPage() {
         </section>
       ))}
 
+      <section className="grid gap-5 border-b pb-5 md:grid-cols-[220px_1fr]">
+        <div>
+          <h2 className="font-semibold">Pharmacy invoice</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Legal identifiers and colour used on pharmacy bills.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Label htmlFor="drug_license_numbers">Drug licence numbers</Label>
+            <Textarea
+              id="drug_license_numbers"
+              rows={3}
+              value={form.drug_license_numbers.join("\n")}
+              placeholder={"Enter one licence number per line"}
+              onChange={(event) =>
+                setForm((current) =>
+                  current
+                    ? {
+                        ...current,
+                        drug_license_numbers: event.target.value
+                          .split("\n")
+                          .map((value) => value.trim())
+                          .filter(Boolean),
+                      }
+                    : current,
+                )
+              }
+            />
+          </div>
+          <div>
+            <Label htmlFor="invoice_accent_color">Invoice accent colour</Label>
+            <div className="flex items-center gap-3">
+              <Input
+                id="invoice_accent_color"
+                type="color"
+                className="h-10 w-16 p-1"
+                value={form.invoice_accent_color}
+                onChange={(event) =>
+                  setForm((current) =>
+                    current ? { ...current, invoice_accent_color: event.target.value } : current,
+                  )
+                }
+              />
+              <Input
+                value={form.invoice_accent_color}
+                readOnly
+                aria-label="Invoice accent colour"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="grid gap-5 md:grid-cols-[220px_1fr]">
         <h2 className="font-semibold">Invoice text</h2>
         <div className="space-y-4">

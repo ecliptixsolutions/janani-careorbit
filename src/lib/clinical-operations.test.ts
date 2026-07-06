@@ -11,7 +11,21 @@ describe("calculateInvoiceTotals", () => {
         ],
         100,
       ),
-    ).toEqual({ subtotal: 2000, tax: 230, total: 2130 });
+    ).toEqual({ subtotal: 2000, lineDiscount: 0, tax: 230, total: 2130 });
+  });
+
+  it("applies line discounts before tax", () => {
+    expect(
+      calculateInvoiceTotals([
+        {
+          description: "Medicine",
+          quantity: 2,
+          unitPrice: 100,
+          discountPercent: 10,
+          taxRate: 12,
+        },
+      ]),
+    ).toEqual({ subtotal: 200, lineDiscount: 20, tax: 21.6, total: 201.6 });
   });
 
   it("never creates a negative invoice total", () => {

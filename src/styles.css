@@ -182,3 +182,20 @@
     box-shadow: var(--shadow-lg);
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #pharmacy-invoice-print,
+  #pharmacy-invoice-print * {
+    visibility: visible;
+  }
+
+  #pharmacy-invoice-print {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+  }
+}

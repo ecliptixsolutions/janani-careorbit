@@ -163,6 +163,8 @@ function BillingPage() {
       email: organization?.email ?? undefined,
       website: organization?.website ?? undefined,
       gstin: organization?.gstin ?? undefined,
+      drugLicenseNumbers: organization?.drug_license_numbers ?? [],
+      accentColor: organization?.invoice_accent_color ?? "#2563eb",
       terms: organization?.invoice_terms ?? undefined,
       paymentDetails: organization?.payment_details ?? undefined,
       footer: organization?.invoice_footer ?? undefined,
@@ -322,7 +324,7 @@ function BillingPage() {
 
   const editDraft = (invoice: InvoiceRow) => {
     setEditingInvoice(invoice);
-    setPatientId(invoice.patient_id);
+    setPatientId(invoice.patient_id ?? "");
     setLines(jsonArray<InvoiceLine>(invoice.items));
     setDiscount(String(invoice.discount_amount));
     setNotes(invoice.notes ?? "");
@@ -376,7 +378,8 @@ function BillingPage() {
                   name: "Invoices",
                   rows: invoices.map((invoice) => ({
                     "Invoice number": invoice.invoice_number,
-                    Patient: invoice.patients?.full_name ?? "",
+                    Type: invoice.invoice_type,
+                    Patient: invoice.patients?.full_name ?? invoice.walk_in_name ?? "",
                     MRN: invoice.patients?.mrn ?? "",
                     Total: Number(invoice.total_amount),
                     Paid: Number(invoice.paid_amount),
@@ -593,9 +596,11 @@ function BillingPage() {
                       <Badge variant={invoice.status === "cancelled" ? "destructive" : "secondary"}>
                         {invoice.status.replace("_", " ")}
                       </Badge>
+                      <Badge variant="outline">{invoice.invoice_type}</Badge>
                     </div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                      {invoice.patients?.full_name} - {invoice.patients?.mrn}
+                      {invoice.patients?.full_name ?? invoice.walk_in_name ?? "Walk-in customer"}
+                      {invoice.patients?.mrn ? ` - ${invoice.patients.mrn}` : ""}
                     </div>
                     <div className="mt-3 flex flex-wrap gap-5 text-sm">
                       <span>
@@ -615,7 +620,7 @@ function BillingPage() {
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {invoice.status === "draft" && (
+                    {invoice.status === "draft" && invoice.invoice_type === "general" && (
                       <>
                         <Button variant="outline" onClick={() => editDraft(invoice)}>
                           <Pencil className="mr-2 h-4 w-4" /> Edit
@@ -658,14 +663,30 @@ function BillingPage() {
                             invoiceNumber: invoice.invoice_number,
                             invoiceDate: invoice.finalized_at ?? invoice.created_at,
                             status: invoice.status,
-                            patientName: invoice.patients?.full_name ?? "Patient",
-                            mrn: invoice.patients?.mrn ?? "",
-                            patientPhone: invoice.patients?.phone ?? undefined,
+                            title:
+                              invoice.invoice_type === "pharmacy"
+                                ? "PHARMACY TAX INVOICE"
+                                : "TAX INVOICE",
+                            patientName:
+                              invoice.patients?.full_name ??
+                              invoice.walk_in_name ??
+                              "Walk-in customer",
+                            mrn: invoice.patients?.mrn ?? "Walk-in",
+                            patientPhone:
+                              invoice.patients?.phone ?? invoice.walk_in_phone ?? undefined,
                             patientAddress: invoice.patients?.address ?? undefined,
                             items: invoiceLines,
                             subtotal: Number(invoice.subtotal),
                             discount: Number(invoice.discount_amount),
                             tax: Number(invoice.tax_amount),
+                            cgst:
+                              invoice.invoice_type === "pharmacy"
+                                ? Number(invoice.cgst_amount)
+                                : undefined,
+                            sgst:
+                              invoice.invoice_type === "pharmacy"
+                                ? Number(invoice.sgst_amount)
+                                : undefined,
                             total: Number(invoice.total_amount),
                             paid: Number(invoice.paid_amount),
                             brand,
@@ -729,17 +750,36 @@ function BillingPage() {
           {selectedInvoice && (
             <InvoicePreview
               brand={brand}
+              title={
+                selectedInvoice.invoice_type === "pharmacy" ? "PHARMACY TAX INVOICE" : "TAX INVOICE"
+              }
               invoiceNumber={selectedInvoice.invoice_number}
               invoiceDate={selectedInvoice.created_at}
               status={selectedInvoice.status}
-              patientName={selectedInvoice.patients?.full_name ?? "Patient"}
-              mrn={selectedInvoice.patients?.mrn ?? ""}
-              patientPhone={selectedInvoice.patients?.phone ?? undefined}
+              patientName={
+                selectedInvoice.patients?.full_name ??
+                selectedInvoice.walk_in_name ??
+                "Walk-in customer"
+              }
+              mrn={selectedInvoice.patients?.mrn ?? "Walk-in"}
+              patientPhone={
+                selectedInvoice.patients?.phone ?? selectedInvoice.walk_in_phone ?? undefined
+              }
               patientAddress={selectedInvoice.patients?.address ?? undefined}
               items={jsonArray<InvoiceLine>(selectedInvoice.items)}
               subtotal={Number(selectedInvoice.subtotal)}
               discount={Number(selectedInvoice.discount_amount)}
               tax={Number(selectedInvoice.tax_amount)}
+              cgst={
+                selectedInvoice.invoice_type === "pharmacy"
+                  ? Number(selectedInvoice.cgst_amount)
+                  : undefined
+              }
+              sgst={
+                selectedInvoice.invoice_type === "pharmacy"
+                  ? Number(selectedInvoice.sgst_amount)
+                  : undefined
+              }
               total={Number(selectedInvoice.total_amount)}
               paid={Number(selectedInvoice.paid_amount)}
             />

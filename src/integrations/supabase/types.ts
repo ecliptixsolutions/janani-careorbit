@@ -96,7 +96,8 @@ export type Database = {
           dispensed_at: string;
           dispensed_by: string | null;
           id: string;
-          patient_id: string;
+          invoice_id: string | null;
+          patient_id: string | null;
           pharmacy_item_id: string;
           prescription_id: string | null;
           quantity: number;
@@ -106,7 +107,8 @@ export type Database = {
           dispensed_at?: string;
           dispensed_by?: string | null;
           id?: string;
-          patient_id: string;
+          invoice_id?: string | null;
+          patient_id?: string | null;
           pharmacy_item_id: string;
           prescription_id?: string | null;
           quantity: number;
@@ -116,13 +118,21 @@ export type Database = {
           dispensed_at?: string;
           dispensed_by?: string | null;
           id?: string;
-          patient_id?: string;
+          invoice_id?: string | null;
+          patient_id?: string | null;
           pharmacy_item_id?: string;
           prescription_id?: string | null;
           quantity?: number;
           unit_price?: number;
         };
         Relationships: [
+          {
+            foreignKeyName: "dispensations_invoice_id_fkey";
+            columns: ["invoice_id"];
+            isOneToOne: false;
+            referencedRelation: "invoices";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "dispensations_patient_id_fkey";
             columns: ["patient_id"];
@@ -148,67 +158,91 @@ export type Database = {
       };
       invoices: {
         Row: {
+          amount_received: number;
           appointment_id: string | null;
+          brand_snapshot: Json;
           cancellation_reason: string | null;
           cancelled_at: string | null;
+          change_due: number;
+          cgst_amount: number;
           created_at: string;
           created_by: string | null;
           discount_amount: number;
           finalized_at: string | null;
           id: string;
           invoice_number: string;
+          invoice_type: string;
           items: Json;
           notes: string | null;
           paid_amount: number;
-          patient_id: string;
+          patient_id: string | null;
+          sgst_amount: number;
           status: string;
           subtotal: number;
           tax_amount: number;
           total_amount: number;
           updated_at: string;
           updated_by: string | null;
+          walk_in_name: string | null;
+          walk_in_phone: string | null;
         };
         Insert: {
+          amount_received?: number;
           appointment_id?: string | null;
+          brand_snapshot?: Json;
           cancellation_reason?: string | null;
           cancelled_at?: string | null;
+          change_due?: number;
+          cgst_amount?: number;
           created_at?: string;
           created_by?: string | null;
           discount_amount?: number;
           finalized_at?: string | null;
           id?: string;
           invoice_number?: string;
+          invoice_type?: string;
           items?: Json;
           notes?: string | null;
           paid_amount?: number;
-          patient_id: string;
+          patient_id?: string | null;
+          sgst_amount?: number;
           status?: string;
           subtotal?: number;
           tax_amount?: number;
           total_amount?: number;
           updated_at?: string;
           updated_by?: string | null;
+          walk_in_name?: string | null;
+          walk_in_phone?: string | null;
         };
         Update: {
+          amount_received?: number;
           appointment_id?: string | null;
+          brand_snapshot?: Json;
           cancellation_reason?: string | null;
           cancelled_at?: string | null;
+          change_due?: number;
+          cgst_amount?: number;
           created_at?: string;
           created_by?: string | null;
           discount_amount?: number;
           finalized_at?: string | null;
           id?: string;
           invoice_number?: string;
+          invoice_type?: string;
           items?: Json;
           notes?: string | null;
           paid_amount?: number;
-          patient_id?: string;
+          patient_id?: string | null;
+          sgst_amount?: number;
           status?: string;
           subtotal?: number;
           tax_amount?: number;
           total_amount?: number;
           updated_at?: string;
           updated_by?: string | null;
+          walk_in_name?: string | null;
+          walk_in_phone?: string | null;
         };
         Relationships: [
           {
@@ -391,6 +425,7 @@ export type Database = {
           address: string | null;
           allergies: string | null;
           blood_group: string | null;
+          case_fee: number | null;
           created_at: string;
           created_by: string | null;
           date_of_birth: string | null;
@@ -401,12 +436,14 @@ export type Database = {
           mrn: string;
           notes: string | null;
           phone: string | null;
+          sonography_fee: number | null;
           updated_at: string;
         };
         Insert: {
           address?: string | null;
           allergies?: string | null;
           blood_group?: string | null;
+          case_fee?: number | null;
           created_at?: string;
           created_by?: string | null;
           date_of_birth?: string | null;
@@ -417,12 +454,14 @@ export type Database = {
           mrn?: string;
           notes?: string | null;
           phone?: string | null;
+          sonography_fee?: number | null;
           updated_at?: string;
         };
         Update: {
           address?: string | null;
           allergies?: string | null;
           blood_group?: string | null;
+          case_fee?: number | null;
           created_at?: string;
           created_by?: string | null;
           date_of_birth?: string | null;
@@ -433,6 +472,7 @@ export type Database = {
           mrn?: string;
           notes?: string | null;
           phone?: string | null;
+          sonography_fee?: number | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -444,7 +484,10 @@ export type Database = {
           created_by: string | null;
           expires_on: string | null;
           id: string;
+          gst_rate: number;
+          hsn_code: string | null;
           medicine_name: string;
+          mrp: number;
           reorder_level: number;
           sku: string | null;
           stock_quantity: number;
@@ -457,7 +500,10 @@ export type Database = {
           created_by?: string | null;
           expires_on?: string | null;
           id?: string;
+          gst_rate?: number;
+          hsn_code?: string | null;
           medicine_name: string;
+          mrp?: number;
           reorder_level?: number;
           sku?: string | null;
           stock_quantity?: number;
@@ -470,7 +516,10 @@ export type Database = {
           created_by?: string | null;
           expires_on?: string | null;
           id?: string;
+          gst_rate?: number;
+          hsn_code?: string | null;
           medicine_name?: string;
+          mrp?: number;
           reorder_level?: number;
           sku?: string | null;
           stock_quantity?: number;
@@ -478,6 +527,65 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      pharmacy_invoice_items: {
+        Row: {
+          batch_number: string | null;
+          created_at: string;
+          discount_amount: number;
+          discount_percent: number;
+          expires_on: string | null;
+          gst_rate: number;
+          hsn_code: string | null;
+          id: string;
+          invoice_id: string;
+          line_total: number;
+          medicine_name: string;
+          mrp: number;
+          pharmacy_item_id: string | null;
+          quantity: number;
+          sku: string | null;
+          tax_amount: number;
+          taxable_amount: number;
+          unit_price: number;
+        };
+        Insert: {
+          batch_number?: string | null;
+          created_at?: string;
+          discount_amount?: number;
+          discount_percent?: number;
+          expires_on?: string | null;
+          gst_rate?: number;
+          hsn_code?: string | null;
+          id?: string;
+          invoice_id: string;
+          line_total?: number;
+          medicine_name: string;
+          mrp: number;
+          pharmacy_item_id?: string | null;
+          quantity: number;
+          sku?: string | null;
+          tax_amount?: number;
+          taxable_amount?: number;
+          unit_price: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["pharmacy_invoice_items"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_invoice_items_invoice_id_fkey";
+            columns: ["invoice_id"];
+            isOneToOne: false;
+            referencedRelation: "invoices";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pharmacy_invoice_items_pharmacy_item_id_fkey";
+            columns: ["pharmacy_item_id"];
+            isOneToOne: false;
+            referencedRelation: "pharmacy_items";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       prescriptions: {
         Row: {
@@ -579,11 +687,13 @@ export type Database = {
           city: string | null;
           created_at: string;
           currency: string;
+          drug_license_numbers: string[];
           email: string | null;
           gstin: string | null;
           hospital_name: string;
           id: string;
           invoice_footer: string | null;
+          invoice_accent_color: string;
           invoice_prefix: string;
           invoice_terms: string | null;
           legal_name: string | null;
@@ -605,11 +715,13 @@ export type Database = {
           city?: string | null;
           created_at?: string;
           currency?: string;
+          drug_license_numbers?: string[];
           email?: string | null;
           gstin?: string | null;
           hospital_name?: string;
           id?: string;
           invoice_footer?: string | null;
+          invoice_accent_color?: string;
           invoice_prefix?: string;
           invoice_terms?: string | null;
           legal_name?: string | null;
@@ -734,6 +846,21 @@ export type Database = {
           _quantity: number;
         };
         Returns: string;
+      };
+      create_pharmacy_bill: {
+        Args: {
+          _draft_id?: string | null;
+          _items: Json;
+          _notes?: string | null;
+          _patient_id: string | null;
+          _payment_amount?: number;
+          _payment_method?: string;
+          _payment_reference?: string | null;
+          _save_as_draft?: boolean;
+          _walk_in_name: string | null;
+          _walk_in_phone: string | null;
+        };
+        Returns: Database["public"]["Tables"]["invoices"]["Row"];
       };
       record_invoice_payment: {
         Args: {
