@@ -83,21 +83,24 @@ def check_root(base_url: str, mode: str, findings: List[Finding]):
     )
 
     for key, label in REQUIRED_HEADERS.items():
-      value = headers.get(key, "")
-      should_pass = bool(value) if mode == "deployed" else True
-      status_label = "PASS" if should_pass else "FAIL"
-      if mode == "local" and not value:
-          status_label = "INFO"
-      add(
-          findings,
-          f"HEADER-{label.upper().replace('-', '-')}",
-          status_label,
-          "HIGH" if mode == "deployed" else "LOW",
-          "Security headers",
-          base_url,
-          f"{label}: {value or 'missing in local server'}",
-          f"Set {label} at the deployment edge.",
-      )
+        value = headers.get(key, "")
+        should_pass = bool(value) if mode == "deployed" else True
+        if mode == "deployed" and key == "cache-control":
+            should_pass = "private" in value.lower() and "no-store" in value.lower()
+        status_label = "PASS" if should_pass else "FAIL"
+        if mode == "local" and not value:
+            status_label = "INFO"
+        missing_text = "missing in local server" if mode == "local" else "missing"
+        add(
+            findings,
+            f"HEADER-{label.upper().replace('-', '-')}",
+            status_label,
+            "HIGH" if mode == "deployed" else "LOW",
+            "Security headers",
+            base_url,
+            f"{label}: {value or missing_text}",
+            f"Set {label} at the deployment edge.",
+        )
 
     csp = headers.get("content-security-policy", "")
     if mode == "deployed":
