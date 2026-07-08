@@ -2,8 +2,58 @@
 // Server-side Supabase client with service role key - bypasses RLS.
 // Use this for admin operations in server functions and server routes only.
 // For user-authenticated queries (with RLS), use the auth middleware instead.
+import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
+import { getCookies, setCookie } from "@tanstack/react-start/server";
 import type { Database } from "./types";
+
+function getPublicSupabaseEnv() {
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_PUBLISHABLE_KEY =
+    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
+
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    const missing = [
+      ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
+      ...(!SUPABASE_PUBLISHABLE_KEY ? ["SUPABASE_PUBLISHABLE_KEY"] : []),
+    ];
+    const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. Connect Supabase in Lovable Cloud.`;
+    console.error(`[Supabase] ${message}`);
+    throw new Error(message);
+  }
+
+  return { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY };
+}
+
+export function getSupabaseServerClient() {
+  const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } = getPublicSupabaseEnv();
+  const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0];
+
+  return createServerClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    cookieOptions: {
+      name: `careorbit-${projectRef}-auth-v2`,
+      sameSite: "strict",
+      secure: true,
+      path: "/",
+    },
+    cookies: {
+      getAll() {
+        return Object.entries(getCookies()).map(([name, value]) => ({ name, value }));
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          setCookie(name, value, {
+            ...options,
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            path: options?.path ?? "/",
+          });
+        });
+      },
+    },
+  });
+}
 
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL;

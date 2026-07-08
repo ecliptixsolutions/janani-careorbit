@@ -324,9 +324,6 @@ export const signupRoleOptions: Array<{
   { value: "pharmacist", label: "Pharmacist" },
   { value: "lab_technician", label: "Lab Technician" },
   { value: "billing_operator", label: "Billing Operator" },
-  { value: "hospital_admin", label: "Hospital Admin" },
-  { value: "admin", label: "Admin" },
-  { value: "super_admin", label: "Super Admin" },
 ];
 
 export const assignableRoleKeys: Array<Exclude<RoleKey, "pending" | "custom">> = [

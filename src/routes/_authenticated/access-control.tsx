@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ShieldAlert, ShieldCheck, UserCheck, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -49,21 +50,6 @@ function AccessControlPage() {
   const { data: access } = useRoleAccess();
   const qc = useQueryClient();
   const [templateName, setTemplateName] = useState("");
-  const [templates, setTemplates] = useState<CustomTemplate[]>([]);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("careorbit.customRoleTemplates");
-      if (stored) setTemplates(JSON.parse(stored));
-    } catch {
-      setTemplates([]);
-    }
-  }, []);
-
-  const saveTemplates = (next: CustomTemplate[]) => {
-    setTemplates(next);
-    localStorage.setItem("careorbit.customRoleTemplates", JSON.stringify(next));
-  };
 
   const { data: profiles = [], isLoading: profilesLoading } = useQuery<Profile[]>({
     queryKey: ["admin-profiles"],
@@ -84,6 +70,21 @@ function AccessControlPage() {
       if (error && !isMissingRelationError(error)) throw error;
       if (error) return [];
       return data ?? [];
+    },
+  });
+
+  const { data: templates = [] } = useQuery<CustomTemplate[]>({
+    queryKey: ["custom-role-templates", user?.id],
+    enabled: !!user && (access?.permissions.canManageUsers ?? false),
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await (supabase as any)
+        .from("custom_role_templates")
+        .select("key, label")
+        .eq("user_id", user.id)
+        .order("created_at");
+      if (error && !isMissingRelationError(error)) throw error;
+      return error ? [] : ((data ?? []) as CustomTemplate[]);
     },
   });
 
@@ -117,11 +118,10 @@ function AccessControlPage() {
         throw new Error("Only one Super Admin is allowed from this approval screen.");
       }
 
-      await supabase.from("user_roles").delete().eq("user_id", targetUserId);
-      const { error } = await supabase.from("user_roles").insert({
-        user_id: targetUserId,
-        role: roleConfig.role,
-        custom_label: roleConfig.custom_label,
+      const { error } = await (supabase as any).rpc("approve_user_role", {
+        _user_id: targetUserId,
+        _role: roleConfig.role,
+        _custom_label: roleConfig.custom_label,
       });
       if (error) {
         if (isMissingRelationError(error)) throw new Error(missingSchemaMessage("Role assignment"));
@@ -131,12 +131,13 @@ function AccessControlPage() {
     onSuccess: () => {
       toast.success("Role updated");
       qc.invalidateQueries({ queryKey: ["admin-user-roles"] });
+      qc.invalidateQueries({ queryKey: ["admin-profiles"] });
       qc.invalidateQueries({ queryKey: ["role-access"] });
     },
     onError: (error) => toast.error(error.message),
   });
 
-  const createTemplate = () => {
+  const createTemplate = async () => {
     const key = toTemplateKey(templateName);
     if (!key) {
       toast.error("Enter a role name");
@@ -146,8 +147,20 @@ function AccessControlPage() {
       toast.error("Role template already exists");
       return;
     }
-    const next = [...templates, { key, label: templateName.trim() }];
-    saveTemplates(next);
+    const { error } = await (supabase as any).from("custom_role_templates").insert({
+      user_id: user?.id,
+      key,
+      label: templateName.trim(),
+    });
+    if (error) {
+      if (isMissingRelationError(error)) {
+        toast.error(missingSchemaMessage("Custom role templates"));
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["custom-role-templates", user?.id] });
     setTemplateName("");
     toast.success("Role template created");
   };
@@ -272,7 +285,10 @@ function AccessControlPage() {
                   placeholder="e.g. Insurance Desk"
                 />
               </div>
-              <Button onClick={createTemplate} className="w-full bg-gradient-brand text-white">
+              <Button
+                onClick={() => void createTemplate()}
+                className="w-full bg-gradient-brand text-white"
+              >
                 Create role template
               </Button>
               {templates.length > 0 && (

@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleAccess } from "@/hooks/use-role-access";
+import { useSessionTracking } from "@/hooks/use-session-tracking";
 import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, ShieldCheck } from "lucide-react";
@@ -12,9 +13,10 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { user, loading } = useAuth();
+  const { session, user, loading } = useAuth();
   const { data: access, isLoading: accessLoading } = useRoleAccess();
   const navigate = useNavigate();
+  useSessionTracking(session, access?.roleKey);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });

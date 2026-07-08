@@ -1,0 +1,21 @@
+{
+  "application": "CareOrbit",
+  "triage_date": "2026-07-08",
+  "items": [
+    { "id": "CR-001", "verdict": "true_positive", "action": "fixed_in_repo_plus_external_rotation_required" },
+    { "id": "CR-002", "verdict": "true_positive", "action": "fixed" },
+    { "id": "CR-003", "verdict": "true_positive", "action": "fixed" },
+    { "id": "HI-001", "verdict": "true_positive", "action": "fixed" },
+    { "id": "HI-002", "verdict": "true_positive", "action": "fixed" },
+    { "id": "HI-003", "verdict": "true_positive", "action": "fixed" },
+    { "id": "HI-004", "verdict": "true_positive", "action": "fixed_for_server_middleware; direct Supabase access remains governed by RLS" },
+    { "id": "ME-001", "verdict": "true_positive", "action": "external_vercel_or_supabase_rate_limit_required" },
+    { "id": "ME-002", "verdict": "true_positive", "action": "origin_check_middleware_added" },
+    { "id": "ME-003", "verdict": "true_positive", "action": "fixed" },
+    { "id": "ME-004", "verdict": "true_positive", "action": "fixed_root_error_boundary" },
+    { "id": "ME-005", "verdict": "true_positive", "action": "fixed" },
+    { "id": "LO-001", "verdict": "true_positive", "action": "fixed_with_notification_read_states_table" },
+    { "id": "LO-002", "verdict": "true_positive", "action": "fixed_with_custom_role_templates_table" },
+    { "id": "LO-003", "verdict": "true_positive", "action": "fixed_with_no_store_headers" }
+  ]
+}

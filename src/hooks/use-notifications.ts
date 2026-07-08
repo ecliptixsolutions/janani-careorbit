@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,26 +25,6 @@ export type NotificationItem = {
   phone?: string | null;
 };
 
-function readAppointmentKey(userId: string) {
-  return `careorbit.readAppointmentNotifications.${userId}`;
-}
-
-function getReadAppointmentIds(userId: string) {
-  if (typeof window === "undefined") return new Set<string>();
-  try {
-    return new Set(JSON.parse(localStorage.getItem(readAppointmentKey(userId)) ?? "[]"));
-  } catch {
-    return new Set<string>();
-  }
-}
-
-function saveReadAppointmentId(userId: string, id: string) {
-  if (typeof window === "undefined") return;
-  const next = getReadAppointmentIds(userId);
-  next.add(id);
-  localStorage.setItem(readAppointmentKey(userId), JSON.stringify([...next]));
-}
-
 function fromDbNotification(row: DbNotification): NotificationItem {
   return {
     id: row.id,
@@ -59,7 +40,10 @@ function fromDbNotification(row: DbNotification): NotificationItem {
   };
 }
 
-function fromAppointment(row: AppointmentWithPatient, userId: string): NotificationItem {
+function fromAppointment(
+  row: AppointmentWithPatient,
+  readAppointmentIds: Set<string>,
+): NotificationItem {
   const when = format(new Date(row.scheduled_at), "MMM d, h:mm a");
   const patient = row.patients?.full_name ?? "Patient";
   return {
@@ -67,7 +51,7 @@ function fromAppointment(row: AppointmentWithPatient, userId: string): Notificat
     title: "New appointment assigned",
     body: `${patient} is scheduled for ${when}${row.reason ? ` - ${row.reason}` : ""}.`,
     createdAt: row.created_at,
-    read: getReadAppointmentIds(userId).has(row.id),
+    read: readAppointmentIds.has(row.id),
     source: "appointment",
     appointmentId: row.id,
     patientId: row.patient_id,
@@ -99,6 +83,10 @@ export function useNotifications() {
           .order("created_at", { ascending: false })
           .limit(20),
       ]);
+      const readStateResult = await (supabase as any)
+        .from("notification_read_states")
+        .select("appointment_id")
+        .eq("user_id", user.id);
 
       if (notificationResult.error && !isMissingRelationError(notificationResult.error)) {
         throw notificationResult.error;
@@ -110,10 +98,17 @@ export function useNotifications() {
       const dbItems = notificationResult.error
         ? []
         : (notificationResult.data ?? []).map(fromDbNotification);
+      const readAppointmentIds = new Set<string>(
+        readStateResult.error
+          ? []
+          : ((readStateResult.data ?? []) as Array<{ appointment_id: string }>).map(
+              (row) => row.appointment_id,
+            ),
+      );
       const appointmentItems = appointmentResult.error
         ? []
         : ((appointmentResult.data ?? []) as AppointmentWithPatient[]).map((row) =>
-            fromAppointment(row, user.id),
+            fromAppointment(row, readAppointmentIds),
           );
 
       const dbAppointmentIds = new Set(dbItems.map((item) => item.appointmentId).filter(Boolean));
@@ -138,7 +133,12 @@ export function useNotifications() {
           .eq("recipient_id", user.id);
         if (error && !isMissingRelationError(error)) throw error;
       } else if (item.appointmentId) {
-        saveReadAppointmentId(user.id, item.appointmentId);
+        const { error } = await (supabase as any).from("notification_read_states").upsert({
+          user_id: user.id,
+          appointment_id: item.appointmentId,
+          read_at: new Date().toISOString(),
+        });
+        if (error && !isMissingRelationError(error)) throw error;
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications", user?.id] }),
@@ -148,11 +148,19 @@ export function useNotifications() {
     mutationFn: async () => {
       if (!user) return;
       const unread = query.data?.filter((item) => !item.read) ?? [];
-      unread.forEach((item) => {
-        if (item.source === "appointment" && item.appointmentId) {
-          saveReadAppointmentId(user.id, item.appointmentId);
-        }
-      });
+      const appointmentReads = unread
+        .filter((item) => item.source === "appointment" && item.appointmentId)
+        .map((item) => ({
+          user_id: user.id,
+          appointment_id: item.appointmentId,
+          read_at: new Date().toISOString(),
+        }));
+      if (appointmentReads.length > 0) {
+        const { error } = await (supabase as any)
+          .from("notification_read_states")
+          .upsert(appointmentReads);
+        if (error && !isMissingRelationError(error)) throw error;
+      }
       const dbIds = unread.filter((item) => item.source === "notification").map((item) => item.id);
       if (dbIds.length > 0) {
         const { error } = await supabase

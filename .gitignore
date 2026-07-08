@@ -8,6 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.security-tools/
+security/results/
+test-results/
+__pycache__/
+*.pyc
 dist
 dist-ssr
 .output

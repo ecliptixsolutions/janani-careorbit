@@ -1,0 +1,63 @@
+{
+  "application": "CareOrbit",
+  "generated_at": "2026-07-08",
+  "findings": [
+    {
+      "id": "CR-001",
+      "type": "Secret management",
+      "severity": "CRITICAL",
+      "status": "remediated-in-repo",
+      "summary": "Service role key was present in local .env and secret scanning was absent.",
+      "fix": "Removed the local key entry, added gitleaks workflow, verified no service role marker in client scan.",
+      "remaining_external_action": "Rotate the key in Supabase dashboard and update server-side deployment secret."
+    },
+    {
+      "id": "CR-002",
+      "type": "Session/token storage",
+      "severity": "CRITICAL",
+      "status": "fixed",
+      "summary": "Supabase auth explicitly used localStorage.",
+      "fix": "Moved to @supabase/ssr browser/server clients with strict cookie settings."
+    },
+    {
+      "id": "CR-003",
+      "type": "Privilege escalation",
+      "severity": "CRITICAL",
+      "status": "fixed",
+      "summary": "Signup allowed admin-tier role requests.",
+      "fix": "Removed admin-tier signup options and added pending-approval database migration plus approval RPC."
+    },
+    {
+      "id": "HI-001",
+      "type": "CORS",
+      "severity": "HIGH",
+      "status": "fixed",
+      "summary": "Wildcard CORS was used by the invite-staff edge function.",
+      "fix": "Restricted CORS to the production origin and added origin rejection."
+    },
+    {
+      "id": "HI-002",
+      "type": "Security headers",
+      "severity": "HIGH",
+      "status": "fixed",
+      "summary": "Production header set was incomplete.",
+      "fix": "Added enforced CSP, HSTS, nosniff, frame deny, referrer, permissions, and no-store headers."
+    },
+    {
+      "id": "HI-003",
+      "type": "RLS",
+      "severity": "HIGH",
+      "status": "fixed",
+      "summary": "patients, appointments, and pharmacy_items had broad select policies.",
+      "fix": "Added role-scoped policies in a new security migration."
+    },
+    {
+      "id": "ME-005",
+      "type": "XSS",
+      "severity": "MEDIUM",
+      "status": "fixed",
+      "summary": "Chart style injection used dangerouslySetInnerHTML.",
+      "fix": "Replaced with React style content and sanitized CSS variable names."
+    }
+  ]
+}

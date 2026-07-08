@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   Activity,
@@ -17,6 +18,7 @@ import {
   ReceiptIndianRupee,
   Settings,
   ShieldCheck,
+  MonitorCheck,
   Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +27,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useRoleAccess } from "@/hooks/use-role-access";
+import { useAuth } from "@/hooks/use-auth";
+import { getSessionId } from "@/hooks/use-session-tracking";
 import { NotificationBell } from "@/components/notification-bell";
 
 const items = [
@@ -70,6 +74,7 @@ const items = [
     permission: "canManageAutomations",
   },
   { to: "/modules", label: "Modules", icon: LayoutGrid, permission: "canViewModules" },
+  { to: "/sessions", label: "Security", icon: MonitorCheck, permission: "canViewModules" },
   {
     to: "/imports",
     label: "Data Imports",
@@ -100,9 +105,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: access } = useRoleAccess();
+  const { session, user } = useAuth();
   const visibleItems = items.filter((item) => access?.permissions[item.permission] ?? true);
 
   const signOut = async () => {
+    const sessionId = getSessionId(session);
+    if (sessionId && user) {
+      await (supabase as any)
+        .from("user_sessions")
+        .update({ revoked_at: new Date().toISOString(), revoked_reason: "user_logout" })
+        .eq("id", sessionId)
+        .eq("user_id", user.id);
+    }
     await supabase.auth.signOut();
     toast.success("Signed out");
     navigate({ to: "/" });

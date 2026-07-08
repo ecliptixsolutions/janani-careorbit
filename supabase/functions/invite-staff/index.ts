@@ -1,7 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const allowedOrigin = Deno.env.get("SITE_URL") ?? "https://janani-careorbit.vercel.app";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": allowedOrigin,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -17,6 +19,11 @@ const roles = new Set([
 ]);
 
 Deno.serve(async (request) => {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== allowedOrigin) {
+    return new Response("Forbidden", { status: 403, headers: corsHeaders });
+  }
+
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {

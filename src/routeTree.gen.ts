@@ -16,6 +16,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSystemAdminRouteImport } from './routes/_authenticated/system-admin'
+import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedQueueRouteImport } from './routes/_authenticated/queue'
 import { Route as AuthenticatedPrescriptionsRouteImport } from './routes/_authenticated/prescriptions'
 import { Route as AuthenticatedPharmacyRouteImport } from './routes/_authenticated/pharmacy'
@@ -68,6 +69,11 @@ const AuthenticatedSystemAdminRoute =
     path: '/system-admin',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedQueueRoute = AuthenticatedQueueRouteImport.update({
   id: '/queue',
   path: '/queue',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/pharmacy': typeof AuthenticatedPharmacyRoute
   '/prescriptions': typeof AuthenticatedPrescriptionsRoute
   '/queue': typeof AuthenticatedQueueRoute
+  '/sessions': typeof AuthenticatedSessionsRoute
   '/system-admin': typeof AuthenticatedSystemAdminRoute
   '/pharmacy/bill': typeof AuthenticatedPharmacyBillRoute
 }
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/pharmacy': typeof AuthenticatedPharmacyRoute
   '/prescriptions': typeof AuthenticatedPrescriptionsRoute
   '/queue': typeof AuthenticatedQueueRoute
+  '/sessions': typeof AuthenticatedSessionsRoute
   '/system-admin': typeof AuthenticatedSystemAdminRoute
   '/pharmacy/bill': typeof AuthenticatedPharmacyBillRoute
 }
@@ -228,6 +236,7 @@ export interface FileRoutesById {
   '/_authenticated/pharmacy': typeof AuthenticatedPharmacyRoute
   '/_authenticated/prescriptions': typeof AuthenticatedPrescriptionsRoute
   '/_authenticated/queue': typeof AuthenticatedQueueRoute
+  '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
   '/_authenticated/system-admin': typeof AuthenticatedSystemAdminRoute
   '/_authenticated/pharmacy_/bill': typeof AuthenticatedPharmacyBillRoute
 }
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/pharmacy'
     | '/prescriptions'
     | '/queue'
+    | '/sessions'
     | '/system-admin'
     | '/pharmacy/bill'
   fileRoutesByTo: FileRoutesByTo
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/pharmacy'
     | '/prescriptions'
     | '/queue'
+    | '/sessions'
     | '/system-admin'
     | '/pharmacy/bill'
   id:
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pharmacy'
     | '/_authenticated/prescriptions'
     | '/_authenticated/queue'
+    | '/_authenticated/sessions'
     | '/_authenticated/system-admin'
     | '/_authenticated/pharmacy_/bill'
   fileRoutesById: FileRoutesById
@@ -365,6 +377,13 @@ declare module '@tanstack/react-router' {
       path: '/system-admin'
       fullPath: '/system-admin'
       preLoaderRoute: typeof AuthenticatedSystemAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/sessions': {
+      id: '/_authenticated/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof AuthenticatedSessionsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/queue': {
@@ -498,6 +517,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPharmacyRoute: typeof AuthenticatedPharmacyRoute
   AuthenticatedPrescriptionsRoute: typeof AuthenticatedPrescriptionsRoute
   AuthenticatedQueueRoute: typeof AuthenticatedQueueRoute
+  AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
   AuthenticatedSystemAdminRoute: typeof AuthenticatedSystemAdminRoute
   AuthenticatedPharmacyBillRoute: typeof AuthenticatedPharmacyBillRoute
 }
@@ -519,6 +539,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPharmacyRoute: AuthenticatedPharmacyRoute,
   AuthenticatedPrescriptionsRoute: AuthenticatedPrescriptionsRoute,
   AuthenticatedQueueRoute: AuthenticatedQueueRoute,
+  AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
   AuthenticatedSystemAdminRoute: AuthenticatedSystemAdminRoute,
   AuthenticatedPharmacyBillRoute: AuthenticatedPharmacyBillRoute,
 }

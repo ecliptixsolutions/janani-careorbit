@@ -3,23 +3,16 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { databaseRoleFor, signupRoleOptions, type RoleKey } from "@/lib/access-control";
+import { passwordError, passwordRequirements } from "@/lib/password-security";
 
 export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
-const passwordRules = [
-  { label: "At least 8 characters", test: (value: string) => value.length >= 8 },
-  { label: "One uppercase letter", test: (value: string) => /[A-Z]/.test(value) },
-  { label: "One lowercase letter", test: (value: string) => /[a-z]/.test(value) },
-  { label: "One number", test: (value: string) => /\d/.test(value) },
-  { label: "One special character", test: (value: string) => /[^A-Za-z0-9]/.test(value) },
-];
-
 const passwordCharacters = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*?";
 
 function getPasswordChecks(password: string) {
-  return passwordRules.map((rule) => ({ ...rule, passed: rule.test(password) }));
+  return passwordRequirements.map((rule) => ({ ...rule, passed: rule.test(password) }));
 }
 
 function getRandomIndex(length: number) {
@@ -65,10 +58,10 @@ function SignupPage() {
       return;
     }
 
-    const isPasswordStrong = getPasswordChecks(password).every((rule) => rule.passed);
-    if (!isPasswordStrong) {
+    const weakPasswordReason = passwordError(password);
+    if (weakPasswordReason) {
       setErrorMessage("Password does not meet all strength requirements");
-      toast.error("Password does not meet all strength requirements");
+      toast.error(`Password needs: ${weakPasswordReason}`);
       return;
     }
 
@@ -201,7 +194,7 @@ function SignupPage() {
                   ))}
                 </select>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  For testing, accounts are approved immediately with the selected role rights.
+                  New accounts wait for admin approval before CareOrbit access is enabled.
                 </p>
               </div>
 
@@ -268,7 +261,7 @@ function SignupPage() {
                 <div className="mt-3 rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
                   <div className="mb-2 font-medium text-foreground">Password requirements</div>
                   <ul className="grid gap-1.5">
-                    {passwordRules.map((rule) => (
+                    {passwordRequirements.map((rule) => (
                       <li key={rule.label}>{rule.label}</li>
                     ))}
                   </ul>
