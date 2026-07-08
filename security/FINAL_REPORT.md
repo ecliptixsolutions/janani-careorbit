@@ -42,7 +42,13 @@ Direct Vercel deployment was blocked:
 
 - `vercel whoami`: `Not authorized`
 - `vercel deploy --prod --yes`: failed because the CLI could not retrieve project settings from the existing `.vercel` link.
-- No `VERCEL_TOKEN` or equivalent deployment credential was available in this environment.
+- The provided Vercel token is valid for `ecliptix-solutions-projects`, but it is not authorized for the linked project org `team_ciY5gwuIJQVytlt8Il5dctQr`.
+
+Alternate deployment succeeded under the Vercel team available to the provided token:
+
+- Alternate live URL: `https://careorbit-vercel-clean.vercel.app`
+- HTTP security scanner: PASS, 16 passed and 0 failed.
+- Playwright browser security tests: PASS, 3 passed and 0 failed.
 
 Production still serves an older July 6 deployment:
 
@@ -80,7 +86,7 @@ Live retest commands run after the GitHub push:
 
 ## Required External Actions
 
-1. Authenticate Vercel CLI or provide `VERCEL_TOKEN`, then deploy the latest `main` commit to production.
+1. Provide a Vercel token or browser session authorized for the linked `janani-careorbit` project, then deploy the latest `main` commit to production.
 2. Apply `supabase/migrations/20260708190000_security_remediation.sql` to the live Supabase project.
 3. Redeploy the `invite-staff` Supabase edge function.
 4. Rotate the Supabase service-role key in the Supabase dashboard and update only server-side deployment secrets.
