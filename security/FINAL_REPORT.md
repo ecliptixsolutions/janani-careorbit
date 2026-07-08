@@ -36,7 +36,7 @@ All local verification passed on July 8, 2026:
 GitHub push succeeded:
 
 - Branch: `main`
-- Commits: `2398225 Complete web security remediation and testing`, `f5e947b Add final security deployment report`
+- Pushed branch includes the remediation commits and this final report on `main`.
 
 Direct Vercel deployment was blocked:
 
@@ -80,7 +80,7 @@ Live retest commands run after the GitHub push:
 
 ## Required External Actions
 
-1. Authenticate Vercel CLI or provide `VERCEL_TOKEN`, then deploy commit `f5e947b` to production.
+1. Authenticate Vercel CLI or provide `VERCEL_TOKEN`, then deploy the latest `main` commit to production.
 2. Apply `supabase/migrations/20260708190000_security_remediation.sql` to the live Supabase project.
 3. Redeploy the `invite-staff` Supabase edge function.
 4. Rotate the Supabase service-role key in the Supabase dashboard and update only server-side deployment secrets.
